@@ -1,0 +1,71 @@
+<project name="Gaussian Distribution Temporal Logic" default="gdtl" basedir=".">
+<!--
+# Copyright (C) 2015  Cristian Ioan Vasile <cvasile@bu.edu>
+# Hybrid and Networked Systems (HyNeSs) Group, BU Robotics Lab, Boston University
+# See license.txt file for license information.
+
+SRC_PATH=.
+BIN_PATH=bin/
+ANTLR_PATH=lib/
+ANTLR=antlr-4.5.1-complete.jar
+ANTLR_GEN=java org.antlr.v4.Tool
+-->
+    <description>
+        TODO:
+    </description>
+    <!-- set global properties for this build -->
+    <property name="src"   location="." />
+    <property name="bin"   location="bin" />
+    <property name="lib"   location="lib" />
+    <property name="dist"  location="dist" />
+    <property name="antlr" location="${lib}/antlr-4.5.1-complete.jar" />
+    <property name="main-program" value="gdtl" />
+    
+    <target name="init">
+        <!-- Create the time stamp -->
+        <tstamp>
+            <format property="DSTAMP" pattern="yyyy-MM-dd-HH-mm" locale="en,US"/>
+        </tstamp>
+    </target>
+    
+    <target name="gdtl" depends="clean"
+        description="create GDTL lexer and parser" >
+        
+        <java classpath="${src}:${antlr}" classname="org.antlr.v4.Tool">
+              <arg value="-visitor"/>
+              <arg path="${src}/GDTL.g4" />
+              <arg value="-Dlanguage=Python2" />
+        </java>
+        
+        <delete verbose="true">
+                 <fileset dir=".">
+                      <include name="*.tokens"/>
+                 </fileset>
+        </delete>
+    </target>
+    
+    <target name="dist" depends="gdtl,init" description="generate the distribution" >
+        <!-- Create the distribution directory -->
+        <mkdir dir="${dist}"/>
+        
+        <!-- Put everything in gdtl-${DSTAMP}.zip archive file -->
+        <zip destfile="${dist}/gdtl-${DSTAMP}.zip"
+             basedir="."
+             excludes=".project, .pydevproject, dist/**, **/*.pyc, **/*.log"
+        />
+    </target>
+
+    <target name="clean" description="clean up" >
+        <delete verbose="true">
+            <fileset dir=".">
+                <include name="*.tokens"/>
+            </fileset>
+        </delete>
+        <delete verbose="true">
+            <fileset dir="${src}">
+                <include name="GDTLLexer.py" />
+                <include name="GDTLParser.py" />
+            </fileset>
+        </delete>
+    </target>
+</project>

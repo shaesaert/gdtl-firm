@@ -1,0 +1,101 @@
+!!python/object:__main__.Mission
+name: "simple"
+description: "Scenario presented as an example in the RSS2016 paper."
+specification: "G (tr(P) < 2)"
+environment :
+  bases :
+    Base :
+      position : [1, 2.5, 0]
+      color : [0.4, 0.4, 0.4, 1]
+      label : "$Base$"
+      label_position : [-0.3, 0.4]
+      radius : 0.2
+  regions :
+    A :
+      position : [2, 3.5, 0]
+      color : [0.7, 0, 0, 1]
+      label : A
+      label_position : [0, 0.4]
+      radius : 0.2
+    B :
+      position : [4, 3.5, 0]
+      color : [0, 0.7, 0, 1]
+      label : B
+      label_position : [0.2, 0.4]
+      radius : 0.2
+    C :
+      position : [2, 1.5, 0]
+      color : [0, 0, 0.7, 1]
+      label : C
+      label_position : [0, -0.4]
+      radius : 0.2
+    D :
+      position : [4, 1.5, 0]
+      color : [0.7, 0.7, 0, 1]
+      label : D
+      label_position : [0.2, -0.4]
+      radius : 0.2
+  transitions :
+    - {from: A, to: B, duration: 1, label_position: [ 0.0, 0.1]}
+    - {from: A, to: C, duration: 1, label_position: [-0.1, 0.0]}
+    - {from: B, to: C, duration: 2, label_position: [ 0.1,-0.1]}
+    - {from: B, to: D, duration: 1, label_position: [ 0.1, 0.0]}
+    - {from: C, to: D, duration: 1, label_position: [ 0.0,-0.1]}
+    - {from: A, to: A, duration: 1, label_position: [ 0.0, 0.0]}
+    - {from: B, to: B, duration: 1, label_position: [ 0.0, 0.0]}
+    - {from: C, to: C, duration: 1, label_position: [ 0.0, 0.0]}
+    - {from: D, to: D, duration: 1, label_position: [ 0.0, 0.0]}
+    - {from: Base, to: A, duration: 2, label_position: [-0.1, 0.1], color: [0.7, 0.7, 0.7, 1], line_style: '--'}
+    - {from: Base, to: B, duration: 3, label_position: [ 0.0, 0.1], color: [0.7, 0.7, 0.7, 1], line_style: '--'}
+    - {from: Base, to: C, duration: 2, label_position: [-0.1,-0.1], color: [0.7, 0.7, 0.7, 1], line_style: '--'}
+    - {from: Base, to: D, duration: 3, label_position: [ 0.2,-0.2], color: [0.7, 0.7, 0.7, 1], line_style: '--'}
+  boundary : {limits: [[0, 0], [5, 4.5]], color: [0, 0, 0, 1]}
+  directed: False
+no_active_vehicles : 1
+vehicle_size : 0.2
+vehicles :
+  Quad1 :
+      initial_state: [2.5, 2, 0]
+      initial_covariance: [[0.1, 0, 0], [0, 0.1, 0], [0, 0, 0.1]]
+      motion_model:
+        sigmaV: 0.01
+        sigmaOmega: 0.01
+        etaV: 0.01
+        etaOmega: 0.01
+        min_linear_velocity: 1 #300
+        max_linear_velocity: 10 #800
+        max_angular_velocity: 10 #500
+        dt: 0.01
+        wind_noise_pos: 0.1
+        wind_noise_ang: 5
+        state_label: "x"
+        covariance_label: "P"
+      observation_model:
+        observation_jacobian: [[1, 0, 0], [0, 1, 0]]
+        noise_jacobian: [[1, 0], [0, 1]]
+        observation_noise_covariance: [[1, 0], [0, 1]]
+        cover_map:
+          filename: "/home/cristi/Dropbox/work/workspace_linux/PyFIRM/src/data/simple/covermap.txt"
+          minimum_number_of_cameras: 2
+        output_label: "z"
+      color: [1, 0, 0, 1]
+      fuel_model:
+        capacity : 15
+        stationary_rate: 1
+        stationary_uncertainty: 0.1
+        moving_rate: 1
+        moving_uncertainty: 0.1
+        avoid_penalty: 0.2
+        charging_rate : 0.5
+        charging_uncertainty : 0
+timestep: 3
+simulation :
+  loops: 10
+  trajectory_file: trajectories.txt
+  vehicle_label_position: [0.5, 0.2, 0, 0.3, 0.25, 0]
+  video: {file: simple_scenario.mov, interval: 1000}
+  figures: {filename_template: "simple_scenario_frame_{frame:03d}.png"}
+  loop_figure: "simple_scenario_data.png"
+planning :
+  planning_time : 300
+  solution_filename : 'transition_system.txt'

@@ -77,7 +77,7 @@ Vehicles: {vehicles}
         if self.environment.has_key('background'):
             img = plt.imread(self.environment['background'])
             img = np.flipud(img)
-#             plt.imshow(img, origin='lower', extent=(b[0][0], b[1][0], b[0][1], b[1][1]), zorder=1)
+            plt.imshow(img, origin='lower', extent=(b[0][0], b[1][0], b[0][1], b[1][1]), zorder=1)
         # draw sites and bases
         for _, data in it.chain(self.environment['regions'].iteritems(),
                          self.environment['bases'].iteritems(),

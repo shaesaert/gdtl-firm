@@ -1,9 +1,12 @@
 !!python/object:__main__.Mission
 name: "BU campus"
 description: "Scenario presented as an example in the ? paper."
-specification: "G ! (box(x, [2.065, 1.77], [0.59, 1.18]) < 1)
-                && G ( F (box(x, [0.59, 0.59], [1.18, 1.18]) < 1) )
-                && G ( F (box(x, [3.54, 2.95], [1.18, 1.18]) < 1) )"
+specification: "G ! Obs(x)
+                && G ( F M(x) && F K(x) && F A(x) && F S(x))
+                && G ( (M(x) || K(x)) => ( (!B1(x)) U (A(x) || S(x)) ) )
+                && G ( (A(x) || S(x)) => ( (!B2(x)) U (M(x) || K(x)) ) )
+                && G (tr(P) < 0.9)
+                && G ( (B1(x) || B2(x)) => (tr(P) < 0.6) )"
 environment :
   bases: {}
   regions : {}

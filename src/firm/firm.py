@@ -32,7 +32,7 @@ from lomap import Ts
 from lomap import Markov as MDP
 from lomap import Rabin
 from lomap import Timer
-from gdtl import gdtl2ltl, evalPred
+from gdtl import gdtl2ltl, PredicateContext
 
 from linearsystem import LinearSystem
 from controller import SwitchingController
@@ -148,7 +148,9 @@ class FIRM(object):
         low, high = self.bounds
         extend = high - low
         xc = (low + high)/2.0
-        self.context = {'norm': lambda x: np.linalg.norm(np.array(x[:2]-xc)/extend, ord=np.infty)}
+        self.context = PredicateContext(
+                {'norm': lambda x: np.linalg.norm(np.array(x[:2]-xc)/extend,
+                                                  ord=np.infty)})
         # save state and covariance labels
         self.state_label = state_label
         self.covariance_label = cov_label
@@ -158,12 +160,11 @@ class FIRM(object):
         belief node.
         '''
         # update predicate evaluation context with custom symbols
-#         self.context.update({'px' : belief.x, 'py': belief.y}) #TODO: make this general
         return set([ap for ap, pred in self.ap.iteritems()
-                           if evalPred(pred, belief.conf[:2], belief.cov[:2, :2], #TODO: make this general
+                           if self.context.evalPred(pred,
+                                       belief.conf[:2], belief.cov[:2, :2], #TODO: make this general
                                        state_label=self.state_label,
-                                       cov_label=self.covariance_label,
-                                       attr_dict=self.context)])
+                                       cov_label=self.covariance_label)])
     
     def addState(self, state, initial=False, copy=True):
         '''Adds a state to the transition system.

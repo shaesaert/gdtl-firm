@@ -17,6 +17,7 @@ expr:
     |   ('tr('|'det('|'norm(') expr ')'
     |   'mah(' expr ',' expr ',' expr ')'
     |   'box(' expr ',' expr ',' expr ')'
+    |   expr '(' ( expr ( ',' expr )* )?  ')'
     |   expr ('*'|'/') expr
     |   expr ('+'|'-') expr
     |   '[' RATIONAL ( ',' RATIONAL )* ']'

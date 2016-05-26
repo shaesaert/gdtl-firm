@@ -182,28 +182,42 @@ def gdtl2ltl(formula):
     
     return ast, ap
 
-mah = lambda x, P, xc: mahalanobis(x, xc, np.asarray(np.mat(P).I))
-functions = {'det': np.linalg.det, 'tr': np.trace, 'mah': mah, 'norm': np.linalg.norm,
-             'box': lambda x, xc, s: np.max(2*np.abs(np.asarray(x) - np.asarray(xc))/np.array(s))} 
 
-def evalPred(pred, state, cov, state_label='x', cov_label='P', attr_dict=None):
-    context = {state_label: np.array(state), cov_label: np.mat(cov)}
-    context.update(functions)
-    if attr_dict:
-        context.update(attr_dict)
-    return eval(str(pred), context)
+class PredicateContext(object):
+    
+    mah = lambda x, P, xc: mahalanobis(x, xc, np.asarray(np.mat(P).I))
+    functions = {'det': np.linalg.det,
+                 'tr': np.trace,
+                 'mah': mah,
+                 'norm': np.linalg.norm,
+                 'box': lambda x, xc, s: (np.max(2*np.abs(np.asarray(x)
+                                                - np.asarray(xc))/np.array(s)))
+    }
+    
+    def __init__(self, attr_dict=None):
+        self.context = dict(PredicateContext.functions)
+        if attr_dict:
+            self.context.update(attr_dict)
+    
+    def evalPred(self, pred, state, cov, state_label='x', cov_label='P', attr_dict=None):
+        lcontext = {state_label: np.asarray(state), cov_label: np.mat(cov)}
+        if attr_dict:
+            lcontext.update(attr_dict)
+        return eval(str(pred), self.context, lcontext)
 
 if __name__ == '__main__':
     formula = "!(x < 10) && F y > 2 || G z<=8"
     ltl, ap = gdtl2ltl(formula)
     print ltl.formulaString(ltl=True)
     
+    pc = PredicateContext()
+    
     for pred in ['tr(P) < 2', 'tr(P) < 3', 'det(P) < 1', 'det(P)<1.01',
                  'mah(x, P, [1, 1]) < 1.41', 'mah(x, P, [1, 1]) < 1.42',
                  'theta < 2', 'theta < 2.01', 'norm(x) < 2', 'norm(x) < 3',
                  'box(x, [0.5, 1.5], [1, 1]) <= 1']:
         ltl, _ = gdtl2ltl(pred)
-        print evalPred(ltl, state=[1, 2], cov=[[2, 0], [0, 0.5]], attr_dict={'theta':2})
+        print pc.evalPred(ltl, state=[1, 2], cov=[[2, 0], [0, 0.5]], attr_dict={'theta':2})
         print
     
     formula = (("G ! ({obs}) "
@@ -211,7 +225,8 @@ if __name__ == '__main__':
                 + "&& G F ( {b} && ( ! ({d1}) U {a} ) ) "
                 + "&& G {u1} "
                 + "&& G (({d1} || {d2}) => {u2}) "
-                + "&& G {box}").
+                + "&& G {box}"
+                + "&& G obs(2, 3, [1, 2, 3]) < 2").
                     format(obs = 'mah(x, P, [2.065, 1.77]) < 0.6',
                            a   = 'mah(x, P, [0.59, 0.59]) < 0.6',
                            b   = 'mah(x, P, [3.54, 2.95]) < 0.6',

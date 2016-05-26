@@ -161,12 +161,12 @@ Logic specifications.''',
     fname = os.path.join(args.output_dir,
                                mission.planning.get('solution_filename', None))
     
-#     if my_setup.solve(save=fname):
-#         my_setup.execute_solution()
-#         logging.info('Plan Executed Successfully.')
-#     else:
-#         logging.info('Unable to find Solution in given time.')
-#     logging.info('Task Complete')
+    if my_setup.solve(save=fname):
+        my_setup.execute_solution()
+        logging.info('Plan Executed Successfully.')
+    else:
+        logging.info('Unable to find Solution in given time.')
+    logging.info('Task Complete')
     
     mission.visualize(my_setup.planner.ts, plot='plot')
 

@@ -210,7 +210,7 @@ class SwitchingController(FeedbackController):
         return self.target.isReached(state)
     
     def generateFeedbackControl(self, state, t=None):
-        if t == 200:
+        if t == 1000:
             assert False
         error_dist = self.target.distanceTo(state)
         if self.target.isReached(state):

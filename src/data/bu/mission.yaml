@@ -47,7 +47,7 @@ simulation:
   loop_figure: "simple_scenario_data.png"
 planning:
   seed: 1001
-  planning_steps: 24
+  planning_steps: 39
   planning_time: 1200
   sat_probability_threshold: 0.8
   solution_filename: 'transition_system.txt'
@@ -55,7 +55,7 @@ planning:
     nearest_neighbors:
       max_number_of_neighbors: 6
       max_connection_radius: 1.0
-    steering_dist_bounds: [0.6, 0.99999]
+    steering_dist_bounds: [0.4, 0.99999]
     controller:
       control_queue_size: 10
       state_weight: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]

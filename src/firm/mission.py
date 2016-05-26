@@ -109,7 +109,7 @@ Vehicles: {vehicles}
             return
         # draw nodes
         x, y = zip(*[s.conf[:2] for s in ts.g.nodes_iter()])
-        viewport.plot(x, y, marker='o', color='k') # TODO: node color
+        viewport.plot(x, y, 'o', color='k') # TODO: node color
         for c, cov in [(s.conf[:2], s.cov[:2, :2]) for s in ts.g.nodes_iter()]:
             if np.trace(cov) <= 10:
                 viewport.add_patch(self.covariance_ellipse(c,cov, color='b',

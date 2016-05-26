@@ -1,12 +1,13 @@
 !!python/object:__main__.Mission
 name: "BU campus"
 description: "Scenario presented as an example in the ? paper."
-specification: "G ! Obs(x)
-                && G ( F M(x) && F K(x) && F A(x) && F S(x))
-                && G ( (M(x) || K(x)) => ( (!B1(x)) U (A(x) || S(x)) ) )
-                && G ( (A(x) || S(x)) => ( (!B2(x)) U (M(x) || K(x)) ) )
+specification: "G ! Obs(x) > 0
+                && G ( F M(x) > 0 && F K(x) > 0 && F A(x) > 0 && F S(x) > 0)
+                && G ( (M(x) > 0 || K(x) > 0) => ( (!(B1(x) > 0)) U (A(x)>0 || S(x)>0) ) )
+                && G ( (A(x)>0 || S(x)>0) => ( (!(B2(x)>0)) U (M(x)>0 || K(x)>0) ) )
                 && G (tr(P) < 0.9)
-                && G ( (B1(x) || B2(x)) => (tr(P) < 0.6) )"
+                && G ( (B1(x)>0 || B2(x)>0) => (tr(P) < 0.6) )"
+predicates: '/home/cristi/Dropbox/work/workspace_linux/PyFIRM/src/data/bu/predicates.py'
 environment :
   bases: {}
   regions : {}

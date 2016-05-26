@@ -120,10 +120,11 @@ class FIRM(object):
         
         self.cnt = it.count()
     
-    def setSpecification(self, specification, state_label='x', cov_label='P'):
+    def setSpecification(self, specification, state_label='x', cov_label='P',
+                         predicates=None):
         '''Performs several operations to setup the planner's specification. The
         specification given as a GDTL formula is augmented with the boundary
-        condition. Afterwards, its is translates to LTL, and the bijection
+        condition. Afterwards, it is translated to LTL, and the bijection
         between atomic propositions and predicates is computed. The obtained LTL
         specification is converted to a Deterministic Rabin Automaton. Lastly,
         the predicate evaluation context is created and saved.
@@ -148,9 +149,11 @@ class FIRM(object):
         low, high = self.bounds
         extend = high - low
         xc = (low + high)/2.0
-        self.context = PredicateContext(
-                {'norm': lambda x: np.linalg.norm(np.array(x[:2]-xc)/extend,
-                                                  ord=np.infty)})
+        if not predicates:
+            predicates = dict()
+        predicates['norm'] = lambda x: np.linalg.norm(np.array(x[:2]-xc)/extend,
+                                                      ord=np.infty)
+        self.context = PredicateContext(predicates)
         # save state and covariance labels
         self.state_label = state_label
         self.covariance_label = cov_label

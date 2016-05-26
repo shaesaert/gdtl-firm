@@ -82,8 +82,15 @@ class FIRM2DSetup(object):
         # set specification
         state_label = self.robotModel['motion_model']['state_label']
         cov_label = self.robotModel['motion_model']['covariance_label']
+        data = dict()
+        execfile(mission.predicates, data)
+        predicates = data['predicates']
+        del data
+        assert predicates is not None, \
+                            'You need to provide at least an empty dictionary!'
         self.planner.setSpecification(self.spec, state_label=state_label,
-                                      cov_label=cov_label)
+                                      cov_label=cov_label,
+                                      predicates=predicates)
         # set initial state
         self.planner.addState(self.start, initial=True)
         # set sampler

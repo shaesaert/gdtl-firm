@@ -85,6 +85,7 @@ class FIRM2DSetup(object):
         data = dict()
         execfile(mission.predicates, data)
         predicates = data['predicates']
+        self.planner.obstacles = data['obstacles']
         del data
         assert predicates is not None, \
                             'You need to provide at least an empty dictionary!'

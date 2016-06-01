@@ -274,15 +274,18 @@ class FIRM(object):
     
     def extend(self):
         '''Generate a state near one in the transition system.'''
+        new_state = None
         while True: # check if it is already in ts
             random_state = self.sampler.sample() # generate new sample
             # find nearest state in transition system
             state, d = self.connection_strategy.nearest(random_state, True)
 #             print 'extend: nearest:', state, d
             if d > self.min_steering_dist:
-                break
+                new_state = self.steer(src=state, dest=random_state)
+                if not self.obstacles(new_state.conf[:2]): #TODO: make this general
+                    break
         # steer towards the random state
-        return self.steer(src=state, dest=random_state)
+        return new_state
     
     def initPA(self):
         '''Initialized the Product MDP.'''
@@ -521,7 +524,7 @@ class FIRM(object):
                 trtime.append(time.time()-t1)
             
             if self.existsSatisfyingRun():
-                pass
+                break
 #                 # solve dynamic program to get MP satisfying policy
 # #                 return True
 #                 solution = self.solveDP()
@@ -548,7 +551,7 @@ class FIRM(object):
 #         print 'ptime:', ptime
         logging.info("%s: reached maximum allowed steps", self.name)
         print '<<<<<'
-        return False
+        return self.found
     
     #---------------------------------------------------------------------------
     ## STUBS ##
@@ -618,7 +621,7 @@ class FIRM(object):
 #                 print '\t', nb[0].conf, nb[1], d['prob'], d['sat'].flatten()
 #             
 #             print
-         
+        
         print self.ts.g.number_of_nodes(), self.ts.g.number_of_edges()
         print self.pa.g.number_of_nodes(), self.pa.g.number_of_edges()
 #         

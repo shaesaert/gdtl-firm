@@ -27,7 +27,7 @@ def obstacles(state):
     x, y = state
     return ((0 < x < 4.88 and 2.37 < y < 3.64)
             or (1 < y < 1.54 and (0 < x < 0.59
-                                  or 1.32 < x < 2.36
+                                  or 1.32 < x < 2.65
                                   or 3.42 < x < 3.69
                                   or 4.25 < x < 4.88
                                   )
@@ -36,7 +36,7 @@ def obstacles(state):
 
 def bridge1(state):
     x, y = state
-    return 1 < y < 1.54 and (2.36 < x < 3.42 or 3.69 < x < 4.25)
+    return 1 < y < 1.54 and (2.65 < x < 3.42 or 3.69 < x < 4.25)
 
 def bridge2(state):
     x, y = state

@@ -601,17 +601,22 @@ class FIRM(object):
         ts_edges = [(tuple(map(float, u.conf)), tuple(map(float, v.conf)))
                                             for u, v in self.ts.g.edges_iter()]
         ts_init = tuple(map(float, next(self.ts.init.iterkeys()).conf))
-#         pa_edges = [((tuple(map(float, u.conf)), s_u),
-#                      (tuple(map(float, v.conf)), s_v),
-#                      {'prob': float(d['prob']), 'sat': tuple(map(float, d['sat'].flatten()))})
-#                     for (u, s_u), (v, s_v), d in self.pa.g.edges(data=True)]
-#         pa_init = iter(self.pa.init).next()
-#         pa_init = (tuple(map(float, pa_init[0].conf)), pa_init[1])
+        pa_edges = [((tuple(map(float, u.conf)), s_u),
+                     (tuple(map(float, v.conf)), s_v),
+                     {'prob': float(d['prob']), 'sat': tuple(map(float, d['sat'].flatten()))})
+                    for (u, s_u), (v, s_v), d in self.pa.g.edges(data=True)]
+        pa_init = iter(self.pa.init).next()
+        pa_init = (tuple(map(float, pa_init[0].conf)), pa_init[1])
          
-#         with open(filename, 'w') as fout:
-#             yaml.dump({'ts': ts_edges, 'ts_init': ts_init,},
-# #                        'pa': pa_edges, 'pa_init': pa_init,},
-#                        fout)
+        with open(filename, 'w') as fout:
+            yaml.dump({'ts': ts_edges, 'ts_init': ts_init,},
+#                        'pa': pa_edges, 'pa_init': pa_init,},
+                       fout)
+        
+        with open(filename + '.pa.txt', 'w') as fout:
+            yaml.dump({'pa': pa_edges, 'pa_init': pa_init,},
+#                        'pa': pa_edges, 'pa_init': pa_init,},
+                       fout)
          
 #         for s in self.pa.g:
 #             print 'Node:', s[0].conf, s[1], 'cov:', np.diag(s[0].cov)

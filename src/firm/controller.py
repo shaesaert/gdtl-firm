@@ -238,7 +238,7 @@ class SwitchingController(FeedbackController):
         else:
 #             logging.debug('Rotate on spot: error distance=%f, heading=%f, line-of-sight=%f',
 #                           error_dist, error_heading, los_angle)
-            print 'Rotate on spot: error distance=%f, heading=%f, line-of-sight=%f state.yaw=%f' % (error_dist, error_heading, los_angle, state.yaw)
+#             print 'Rotate on spot: error distance=%f, heading=%f, line-of-sight=%f state.yaw=%f' % (error_dist, error_heading, los_angle, state.yaw)
             linear_velocity = 0.0 # use constant linear velocity
             angular_velocity = self.kd_heading * error_heading
             angular_velocity = max(min(angular_velocity,

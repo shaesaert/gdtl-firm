@@ -53,7 +53,8 @@ Vehicles: {vehicles}
         with open(filename, 'r') as fin:
             return load(fin)
     
-    def covariance_ellipse(self, center, cov, scale=0.1, **kwargs):#5.991):
+    @classmethod
+    def covariance_ellipse(cls, center, cov, scale=0.1, **kwargs):#5.991):
         '''Returns the covariance ellipse around a state.'''
         eigvalue, eigvec = np.linalg.eigh(cov)
         if eigvalue[0] < eigvalue[1]:
@@ -77,7 +78,9 @@ Vehicles: {vehicles}
         if self.environment.has_key('background'):
             img = plt.imread(self.environment['background'])
             img = np.flipud(img)
-            plt.imshow(img, origin='lower', extent=(b[0][0], b[1][0], b[0][1], b[1][1]), zorder=0)
+            plt.imshow(img, origin='lower', extent=(b[0][0], b[1][0], b[0][1], b[1][1]), zorder=0,
+#                        alpha=0.5
+                       )
             return
         # draw sites and bases
         for _, data in it.chain(self.environment['regions'].iteritems(),
@@ -113,7 +116,7 @@ Vehicles: {vehicles}
         viewport.plot(x, y, 'o', color='k') # TODO: node color
         for c, cov in [(s.conf[:2], s.cov[:2, :2]) for s in ts.g.nodes_iter()]:
             if np.trace(cov) <= 10:
-                viewport.add_patch(self.covariance_ellipse(c,cov, color='b',
+                viewport.add_patch(Mission.covariance_ellipse(c,cov, color='b',
                                                     fill=False, lw=1, zorder=2))
 #         for s, d in ts.g.nodes_iter(data=True):
 #             x, y = s.conf[:2]

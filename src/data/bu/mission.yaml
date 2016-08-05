@@ -130,8 +130,8 @@ simulation:
   figures: {filename_template: "simple_scenario_frame_{frame:03d}.png"}
   loop_figure: "simple_scenario_data.png"
 planning:
-  seed: 1002
-  planning_steps: 29
+  seed: 2003
+  planning_steps: 40
   planning_time: 1200
   sat_probability_threshold: 0.8
   solution_filename: 'transition_system.txt'

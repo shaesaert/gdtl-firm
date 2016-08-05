@@ -541,13 +541,13 @@ class FIRM(object):
             print 'Found:', self.found
         
         print '>>>>'
-        print 'Found:', self.found
+        logging.info('Found: %s', str(self.found))
 #         print 'Prob:', self.solution.prob
 #         print 'OptimalActions:', self.solution.path
-        print 'TS:', self.ts.g.number_of_nodes(), self.ts.g.number_of_edges()
-        print 'PA:', self.pa.g.number_of_nodes(), self.pa.g.number_of_edges()
-        print 'mean trtime:', np.mean(trtime)
-        print 'overall:', time.time() - t0
+        logging.info('TS: (%d, %d)', self.ts.g.number_of_nodes(), self.ts.g.number_of_edges())
+        logging.info('PA: (%d, %d)', self.pa.g.number_of_nodes(), self.pa.g.number_of_edges())
+        logging.info('Mean add transition time: %f', np.mean(trtime))
+        logging.info('Overall execution time: %f', time.time() - t0)
 #         print 'ptime:', ptime
         logging.info("%s: reached maximum allowed steps", self.name)
         print '<<<<<'

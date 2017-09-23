@@ -22,8 +22,12 @@ import itertools as it
 import logging
 
 import numpy as np
-import rospy
-from geometry_msgs.msg import Vector3
+try:
+    import rospy
+    from geometry_msgs.msg import Vector3
+except ImportError as ie:
+#     logging.warning('Could not import rospy module: %s', ie)
+    pass
 
 from se2beliefspace import SE2BeliefState
 

@@ -22,8 +22,12 @@ import logging
 import numpy as np
 from threading import Lock
 
-import rospy
-from geometry_msgs.msg import Twist, PoseStamped
+try:
+    import rospy
+    from geometry_msgs.msg import Twist, PoseStamped
+except ImportError as ie:
+#     logging.warning('Could not import rospy module: %s', ie)
+    pass
 
 
 class ObservationModelMethod:

@@ -2,7 +2,8 @@ license_text='''
     Module implements API for parsing and translating a GDTL formula to an
     LTL formula.
     Copyright (C) 2015  Cristian Ioan Vasile <cvasile@bu.edu>
-    Hybrid and Networked Systems (HyNeSs) Group, BU Robotics Lab, Boston University
+    Hybrid and Networked Systems (HyNeSs) Group, BU Robotics Lab,
+    Boston University
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

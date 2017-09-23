@@ -1,7 +1,8 @@
 license_text='''
     Script to setup a planner for a planar unicycle robot.
     Copyright (C) 2016  Cristian Ioan Vasile <cvasile@bu.edu>
-    Hybrid and Networked Systems (HyNeSs) Group, BU Robotics Lab, Boston University
+    Hybrid and Networked Systems (HyNeSs) Group, BU Robotics Lab,
+    Boston University
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,7 +32,7 @@ from firm import SE2BeliefState, SE2StateSampler, \
 
 
 class FIRM2DSetup(object):
-    '''Class to set up a mission for a planar unicycle robot.'''
+    '''Class to set up a mission for a planar unicycle robot and a copter.'''
     
     def __init__(self, data=None):
         self.setup(data)
@@ -54,7 +55,7 @@ class FIRM2DSetup(object):
         # load environment
         self.env = mission.environment
         # load robot model
-        assert mission.no_active_vehicles == 1
+        assert mission.no_active_vehicles == 2
         self.robotModel = mission.vehicles.itervalues().next()
         # read the start Pose
         x, y, yaw = self.robotModel['initial_state']
@@ -95,9 +96,13 @@ class FIRM2DSetup(object):
         # set initial state
         self.planner.addState(self.start, initial=True)
         # set sampler
-        self.planner.sampler = SE2StateSampler(self.planner.bounds + np.array([[0.2, 0.2], [-0.2, -0.2]])) #TODO: make this general
-    
-    def solve(self, load=None, save=None):
+        self.planner.sampler = SE2StateSampler(self.planner.bounds
+                + np.array([[0.2, 0.2], [-0.2, -0.2]])) #TODO: make this general
+
+        self.isSetup = True
+
+    def solve(self, vehicle, load=None, save=None):
+        '''Solves the motion planning problem for the given vehicle.'''
         if load:
             self.planner.loadRoadMapFromFile(load)
         r = self.planner.solve(steps=self.planningSteps,
@@ -107,14 +112,42 @@ class FIRM2DSetup(object):
             self.planner.savePlannerData(save)
         return r
     
-    def execute_solution(self):
-        self.planner.executePolicy()
+    def execute_policy(self, vehicle):
+        '''Executes the computed policy for the given vehicle.'''
+        if vehicle == 'rover':
+            self.planner.executePolicy()
+        elif vehicle == 'copter':
+            #TODO: implement policy execution for copter
+            raise NotImplementedError
+    
+    def run(self, fnametemplate, N=1):
+        '''TODO: solve problem and if successful execute it
+        '''
+        for ntries in range(N):
+            fname = fnametemplate.format('rover_{:02d}'.format(ntries))
+            if self.solve('rover', save=fname):
+                logging.info('Plan found.')
+                if self.execute_policy('rover'):
+                    logging.info('Plan Executed Successfully.')
+                    break
+            else:
+                break #TODO: should implement planning for copter here
+                fname = fnametemplate.format('copter_{:02d}'.format(ntries))
+                logging.info('Unable to find Solution in given time.')
+                if not self.solve('copter', save=fname):
+                    logging.info('Unable to find solution for copter in given'
+                                 'time.')
+                    break
+                if not self.execute_solution('copter'):
+                    logging.info('Unable to execute plan for copter.')
+                    break
+        logging.info('Task complete!')
 
 def plan():
     # 0. parse command-line arguments
     parser = argparse.ArgumentParser(
-        description='''Sampling-based mission planner with Distribution Temporal
-Logic specifications.''',
+        description='Sampling-based mission planner with Distribution Temporal '
+                    'Logic specifications.',
         epilog=license_text)
     
     parser.add_argument('mission_file', type=str, help='mission file')
@@ -137,14 +170,15 @@ Logic specifications.''',
     # configure logging
     fs, dfs = '%(asctime)s %(levelname)s %(message)s', '%m/%d/%Y %I:%M:%S %p'
     loglevel = logging.INFO #logging.DEBUG if args.debug else logging.INFO
-    logging.basicConfig(filename=args.logfile, level=loglevel, format=fs, datefmt=dfs)
+    logging.basicConfig(filename=args.logfile, level=loglevel,
+                        format=fs, datefmt=dfs)
     if args.verbose:
         root = logging.getLogger()
         ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(loglevel)
         ch.setFormatter(logging.Formatter(fs, dfs))
         root.addHandler(ch)
-    
+
     # 1. load mission and environment
     mission = Mission.from_file(args.mission_file)
     logging.info('\n' + str(mission))
@@ -153,22 +187,17 @@ Logic specifications.''',
     if args.design: # only shows the environment
         mission.visualize(None, plot='design')
         return
-    
-    # 2. setup, find solution and execute it
+
+    # 2. setup the systems, and planners
     my_setup = FIRM2DSetup()
     # setup planner
     my_setup.setup(mission)
-    # solve problem and if successful execute it
+
+    # 3. execute planners for the rover and copter
     fname = os.path.join(args.output_dir,
-                               mission.planning.get('solution_filename', None))
-    
-    if my_setup.solve(save=fname):
-        my_setup.execute_solution()
-        logging.info('Plan Executed Successfully.')
-    else:
-        logging.info('Unable to find Solution in given time.')
-    logging.info('Task Complete')
-    
+                        mission.planning.get('solution_filename', 'sol_{}.txt'))
+    my_setup.run(fname)
+
     mission.visualize(my_setup.planner.ts, plot='plot')
 
 if __name__ == '__main__':

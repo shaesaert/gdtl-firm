@@ -1,8 +1,11 @@
 #!/usr/bin/env python
+from gc import collect
+from multiprocessing.pool import mapstar
 license_text='''
     Module implements GDTL-FIRM algorithm.
     Copyright (C) 2016  Cristian Ioan Vasile <cvasile@bu.edu>
-    Hybrid and Networked Systems (HyNeSs) Group, BU Robotics Lab, Boston University
+    Hybrid and Networked Systems (HyNeSs) Group, BU Robotics Lab,
+    Boston University
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -82,6 +85,72 @@ class FStrategy(object):
             return [self.states[idx] for idx in idxs if idx < len(self.states)]
         return
 
+class Map(object):
+    '''TODO:
+    '''
+    
+    def __init__(self, bounds, step, reg_predicates):
+        ncols = int((bounds[1][0] - bounds[0][0])/step)
+        nrows = int((bounds[1][1] - bounds[0][1])/step)
+
+        self.maps = dict()
+        for label in reg_predicates:
+            self.maps[label] = np.zeros((nrows, ncols), dtype=np.bool)
+        self.bounds = bounds
+        self.step = step
+
+        if self.maps:
+            for px in range(bounds[0][0]+step/2, bounds[0][1], step):
+                for py in range(bounds[0][0]+step/2, bounds[0][1], step):
+                    for label, pred in reg_predicates.iteritems():
+                        self.maps[label][px/step][py/step] = pred([px, py, 0])
+
+    def check_bounds(self, x, y):
+        '''Checks if the 2d point (x, y) is within the map's boundary.'''
+        return (x < self.bounds[0][0] or x > self.bounds[1][0]
+                or y < self.bounds[0][1] or y > self.bounds[1][1])
+
+    def labels(self, state, label=None):
+        '''Returns all the labels that are set at the given state.'''
+        x, y, _ = state
+        assert self.check_bounds(x, y)
+        px = (x - self.bounds[0][0])/self.step
+        py = (y - self.bounds[0][1])/self.step
+        if label is None:
+            return set(label for label in self.maps if self.maps[label][px][py])
+        return self.maps[label][px][py]
+
+    def collect(self, state, labels):
+        '''Collects samples of all given types.'''
+        return set(lb for lb in labels if self.collect_label(state, lb))
+
+    def collect_label(self, state, label):
+        '''Removes the sample of type label from the region containing the given
+        state.
+        '''
+        if label not in self.maps:
+            return False
+        x, y, _ = state
+        assert self.check_bounds(x, y)
+        px = (x - self.bounds[0][0])/self.step
+        py = (y - self.bounds[0][1])/self.step
+        if not self.maps[label][px][py]:
+            return False
+        stack = deque([(px, py)])
+        while stack:
+            px, py = stack.pop()
+            self.maps[label][px][py] = False
+            stack.append((px+dx, px+dy)
+                            for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+                                if self.maps[label][px+dx][py+dy])
+        return True
+
+    def copy(self):
+        map_ = Map(self.bounds, self.step, dict())
+        for label, layer in self.maps:
+            map_.maps[label] = layer.copy()
+        return map_
+
 
 class FIRM(object):
     '''Feedback Information RoadMap planner'''
@@ -121,7 +190,13 @@ class FIRM(object):
 
         self.cnt = it.count()
 
+    def initMap(self, predicates, step=0.2):
+        '''TODO: description
+        '''
+        self.map = Map(self.bounds, step, predicates)
+
     def setSpecification(self, specification, state_label='x', cov_label='P',
+                         map_label='m', collect_label='c', battery_label='ch',
                          predicates=None):
         '''Performs several operations to setup the planner's specification. The
         specification given as a GDTL formula is augmented with the boundary
@@ -171,21 +246,29 @@ class FIRM(object):
 #                                                       ord=np.infty)
         self.context = PredicateContext(predicates)
         # save state and covariance labels
+        # FIXME: should make this extensible
         self.state_label = state_label
         self.covariance_label = cov_label
+        self.map_label = map_label
+        self.collect_label = collect_label
 
     def getAPs(self, belief):
         '''Computes the set of atomic propositions that are true at the given
         belief node.
         '''
         # update predicate evaluation context with custom symbols
+        #FIXME: make this more extensible
+        attr_dict = {self.map_label: self.ts.node[belief][self.map_label],
+                self.collect_label: self.ts.node[belief][self.collect_label],
+            }
         return set([ap for ap, pred in self.ap.iteritems()
                            if self.context.evalPred(pred,
                                        belief.conf, belief.cov,
                                        state_label=self.state_label,
-                                       cov_label=self.covariance_label)])
+                                       cov_label=self.covariance_label,
+                                       attr_dict=attr_dict)])
 
-    def addState(self, state, initial=False, copy=True):
+    def addState(self, state, maps, collected, initial=False, copy=True):
         '''Adds a state to the transition system.
         Note: By default, a frozen copy of the state is added to the transition
         system. 
@@ -196,14 +279,25 @@ class FIRM(object):
                                                             np.diag(state.cov))
         if copy:
             s = state.copy(freeze=True)
+            maps_ = maps
+            collected_ = collected
         else:
             s = state
             s.freeze()
+            # copy maps
+            maps_ = maps.copy()
+            collected_ = dict(collected)
         # compute set of atomic propositions
         props = self.getAPs(state)
-#         print props, self.ap
+        # collect samples at the state
+        c = maps_.collect(state, props)
+        for lb in c:
+            collected_[lb] = collected_.get(lb, 0) + 1
+        # add state to transition system
         self.ts.g.add_node(s, attr_dict = {'prop': props, 
-                              'controller': controller, 'id': self.cnt.next()})
+                              'controller': controller, 'id': self.cnt.next(),
+                              self.map_label: maps_,
+                              self.collect_label: collected_})
         if initial:
             self.ts.init[s] = 1
         # update the connection strategy

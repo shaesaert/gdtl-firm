@@ -1,102 +1,80 @@
 !!python/object:__main__.Mission
-name: "BU campus"
+name: "Mars mission."
 description: "Scenario presented as an example in the ? paper."
-specification: "G ! Obs(x) > 0
-                && G ( F M(x) > 0 && F K(x) > 0 && F A(x) > 0 && F S(x) > 0)
-                && G ( (M(x) > 0 || K(x) > 0) => ( (! B2(x) > 0) U (A(x) > 0 || S(x) > 0) ) )
-                && G ( (A(x) > 0 || S(x) > 0) => ( (! B1(x) > 0) U (M(x) > 0 || K(x) > 0) ) )
-                && G (tr(P) < 0.9)
-                && G ( (B1(x)>0 || B2(x)>0) => (tr(P) < 0.6) )"
-predicates: '/home/cristi/Dropbox/work/workspace_linux/PyFIRM/src/data/bu/predicates.py'
+specification: "F ( (A(x) > 0 && E_A(x, m) > 0) && F (A(x) > 0 && E_A(x, m) > 0)
+                    && F (B(x) > 0 && E_B(x, m) > 0) )
+                && ((Obs(x) < 1) U (Done(c) > 0))
+                )"
+predicates: "/home/cristi/Dropbox/work/workspace_linux_desktop/gdtl-firm/src/data/mars/predicates.py"
+specification_type: "syntactically co-safe"
 environment :
   bases: {}
   regions :
-    M :
-      position : [0.985, 2.035, 0]
+    A1 :
+      position : [0.5, 3.1, 0]
       color : [1, 1, 0, 0.5]
-      label : M
-      label_position : [0, 0]
-      sides : [0.57, 0.49]
-      show_dot: False
-    K :
-      position : [4.120, 1.820, 0]
-      color : [1, 0, 0, 0.5]
-      label : K
-      label_position : [0, 0]
-      sides : [0.68, 0.50]
-      show_dot: False
-    A :
-      position : [1.690, 0.335, 0]
-      color : [1, 0.645, 0, 0.5]
       label : A
       label_position : [0, 0]
-      sides : [0.46, 0.43]
+      sides : [0.6, 0.6]
       show_dot: False
-    S :
-      position : [4.280, 0.675, 0]
-      color : [0, 0, 1, 0.5]
-      label : S
+    A2 :
+      position : [2.2, 2.0, 0]
+      color : [1, 1, 0, 0.5]
+      label : A
       label_position : [0, 0]
-      sides : [1.20, 0.55]
+      sides : [1.2, 0.4]
       show_dot: False
-    B11 :
-      position : [3.035, 1.27, 0]
+    A3 :
+      position : [4.3, 0.5, 0]
+      color : [1, 1, 0, 0.5]
+      label : A
+      label_position : [0, 0]
+      sides : [0.6, 0.6]
+      show_dot: False
+    B1 :
+      position : [2.2, 0.4, 0]
       color : [0, 1, 0, 0.5]
-      label : B1a
+      label : B
       label_position : [0, 0]
-      sides : [0.77, 0.54]
-      show_dot: False
-    B12 :
-      position : [3.97, 1.27, 0]
-      color : [0, 1, 0, 0.5]
-      label : B1b
-      label_position : [0, 0]
-      sides : [0.56, 0.54]
+      sides : [1.2, 0.4]
       show_dot: False
     B2 :
-      position : [0.955, 1.27, 0]
+      position : [4.2, 3.1, 0]
       color : [0, 1, 0, 0.5]
-      label : B2
+      label : B
       label_position : [0, 0]
-      sides : [0.74, 0.54]
+      sides : [0.8, 0.6]
       show_dot: False
     Obs1:
-      position : [2.440, 3.005, 0]
+      position : [1.2, 1.8, 0]
       color : [0.4, 0.4, 0.4, 0.5]
-      label : Obs1
+      label : Obs
       label_position : [0, 0]
-      sides : [4.88, 1.27]
+      sides : [0.4, 2.0]
       show_dot: False
     Obs2:
-      position : [0.295, 1.27, 0]
+      position : [2.4, 2.6, 0]
       color : [0.4, 0.4, 0.4, 0.5]
-      label : Obs2
+      label : Obs
       label_position : [0, 0]
-      sides : [0.59, 0.54]
+      sides : [2.0, 0.4]
       show_dot: False
     Obs3:
-      position : [1.985, 1.27, 0]
+      position : [4.0, 1.1, 0]
       color : [0.4, 0.4, 0.4, 0.5]
-      label : Obs3
+      label : Obs
       label_position : [0, 0]
-      sides : [1.33, 0.54]
+      sides : [1.6, 0.2]
       show_dot: False
-    Obs4:
-      position : [3.555, 1.27, 0]
-      color : [0.4, 0.4, 0.4, 0.5]
-      label : Obs4
+    Shadow:
+      position : [3.8, 1.8, 0]
+      color : [0.6, 0.6, 0.6, 0.5]
+      label : Shadow
       label_position : [0, 0]
-      sides : [0.27, 0.54]
+      sides : [2.0, 3.6]
       show_dot: False
-    Obs5:
-      position : [4.565, 1.27, 0]
-      color : [0.4, 0.4, 0.4, 0.5]
-      label : Obs5
-      label_position : [0, 0]
-      sides : [0.63, 0.54]
-      show_dot: False
-  boundary : {limits: [[0, 0], [4.87, 3.65]], color: [0, 0, 0, 1]}
-  background : '/home/cristi/Dropbox/work/workspace_linux/PyFIRM/src/data/bu/imMap_annot.png'
+  boundary : {limits: [[0, 0], [4.8, 3.6]], color: [0, 0, 0, 1]}
+#  background : 'path_to_image.png'
   directed: False
 no_active_vehicles : 1
 vehicle_size : 0.2
@@ -109,18 +87,22 @@ vehicles :
         max_linear_velocity: 0.2 # 0.4 [m/s]
         max_angular_velocity: 1.047 # pi/3 [rad/s]
         dt: 0.5
-        process_noise_covariance : [[0.0001, 0, 0], [0, 0.0001, 0], [0, 0, 0.0001]]#[[0.3, 0], [0, 0.3]]
+        process_noise_covariance : [[0.0001, 0, 0], [0, 0.0001, 0], [0, 0, 0.0001]]
         ROS_control_send_rate: 2
         ROS_control_publisher_name: GroundCommandX80Pro2
         state_label: "x"
         covariance_label: "P"
+        map_label: "m"
+        collect_label: "c"
       observation_model:
-        observation_jacobian: [[1, 0, 0], [0, 1, 0], [0, 0, 1]] #[[1, 0], [0, 1]]
-        noise_jacobian: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]#[[1, 0], [0, 1]]
+        observation_jacobian: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        noise_jacobian: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
         observation_noise_covariances: [[[0.001, 0, 0], [0, 0.001, 0], [0, 0, 0.001]], [[0.001, 0, 0], [0, 0.001, 0], [0, 0, 0.001]], [[0.001, 0, 0], [0, 0.001, 0], [0, 0, 0.001]], [[0.001, 0, 0], [0, 0.001, 0], [0, 0, 0.001]], [[0.001, 0, 0], [0, 0.001, 0], [0, 0, 0.001]]]
         output_label: "z"
       color: [1, 0, 0, 1]
       size: 0.15
+  Copter1 :
+      initial_state: [1, 1, 0, 0] # x, y, z, yaw
 timestep: 3
 simulation:
   loops: 10
@@ -131,10 +113,10 @@ simulation:
   loop_figure: "simple_scenario_data.png"
 planning:
   seed: 2003
-  planning_steps: 40
+  planning_steps: 30
   planning_time: 1200
   sat_probability_threshold: 0.8
-  solution_filename: 'transition_system.txt'
+  solution_filename: 'transition_system_{}.txt'
   setup:
     nearest_neighbors:
       max_number_of_neighbors: 6

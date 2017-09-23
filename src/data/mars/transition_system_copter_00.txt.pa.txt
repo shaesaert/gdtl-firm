@@ -1,0 +1,4 @@
+pa: []
+pa_init: !!python/tuple
+- !!python/tuple [0.5, 0.5, 0.0]
+- T0_init

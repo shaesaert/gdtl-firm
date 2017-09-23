@@ -1,6 +1,6 @@
 license_text='''
     Module implements API for parsing and translating a GDTL formula to an
-    LTL formula. 
+    LTL formula.
     Copyright (C) 2015  Cristian Ioan Vasile <cvasile@bu.edu>
     Hybrid and Networked Systems (HyNeSs) Group, BU Robotics Lab, Boston University
 
@@ -53,12 +53,12 @@ class Operation(object):
              'F': EVENT, 'G': ALWAYS}
     names = {NOT: '!', AND: '&&', OR: '||', IMPLIES: '=>', UNTIL: 'U',
              EVENT: 'F', ALWAYS: 'G'}
-    
+
     @classmethod
     def getCode(cls, text):
         '''Gets the code corresponding to the string representation.'''
         return cls.codes.get(text, Operation.NOP)
-    
+
     @classmethod
     def getString(cls, op):
         '''Gets custom string representation for each operation.'''
@@ -67,7 +67,7 @@ class Operation(object):
 
 class Formula(object):
     '''Base class for a GDTL formula'''
-    
+
     def __init__(self, op=Operation.NOP, **kwargs):
         '''Class constructor.'''
         self.op  = op # the operation associated with this tree node.
@@ -83,7 +83,7 @@ class Formula(object):
             self.ap = kwargs['ap']
         elif self.op == Operation.BOOL:
             self.value = bool(kwargs['value'])
-    
+
     def formulaString(self, ltl=False):
         opname = Operation.getString(self.op)
         if self.op in Operation.binaryOPs:
@@ -101,7 +101,7 @@ class Formula(object):
             return str(self.value)
         else:
             raise ValueError('Unknown operation code %d!', self.op)
-    
+
     def treeString(self, level=0):
         opname = Operation.getString(self.op)
         if self.op in Operation.binaryOPs:
@@ -119,27 +119,68 @@ class Formula(object):
             return str(self.value)
         else:
             raise ValueError('Unknown operation code %d!', self.op)
-    
+
+    def isPNF(self):
+        if self.op in Operation.binaryOPs:
+            if self.op == Operation.IMPLIES:
+                return False
+            else:
+                return self.left.isPNF() and self.right.isPNF()
+        elif self.op in Operation.unaryOPs:
+            if self.op == Operation.EVENT:
+                return self.child.isPNF()
+            else:
+                return False
+        return True
+
+    def isBoolean(self):
+        if self.op in Operation.binaryOPs:
+            if self.op == Operation.UNTIL:
+                return False
+            else:
+                return self.left.isBoolean() and self.right.isBoolean()
+        elif self.op in Operation.unaryOPs:
+            if self.op == Operation.NOT:
+                return self.child.isBoolean()
+            else:
+                return False
+        return True
+
+    def isSynCoSafe(self):
+        if self.op in Operation.binaryOPs:
+            if self.op == Operation.IMPLIES:
+                return self.left.isBoolean() and self.right.isSynCoSafe()
+            else:
+                return self.left.isSynCoSafe() and self.right.isSynCoSafe()
+        elif self.op in Operation.unaryOPs:
+            if self.op == Operation.EVENT:
+                return self.child.isSynCoSafe()
+            elif self.op == Operation.NOT:
+                return self.child.isBoolean()
+            else:
+                return False
+        return True
+
     def __str__(self):
         return self.formulaString()
-    
+
     __repr__ = __str__
 
 
 class GDTLAbstractSyntaxTreeExtractor(GDTLVisitor):
     '''Class to extract the AST of a GDTL formula from its Parse Tree.'''
-    
+
     def __init__(self):
         super(GDTLVisitor, self).__init__()
         self.counter = it.count()
         self.ap = dict()
-    
+
     def getAPName(self, pred):
         for k, v in self.ap.iteritems():
             if (v.rop, v.expr, v.threshold) == pred:
                 return k
         return 'p{}'.format(next(self.counter))
-    
+
     def visitFormula(self, ctx):
         op = Operation.getCode(ctx.op.text)
         if op in (Operation.OR, Operation.AND, Operation.IMPLIES, Operation.UNTIL):
@@ -149,10 +190,10 @@ class GDTLAbstractSyntaxTreeExtractor(GDTLVisitor):
         else:
             raise ValueError('Unknown operation code %d!', op)
         return ret
-    
+
     def visitBooleanPred(self, ctx):
         return self.visit(ctx.booleanExpr())
-    
+
     def visitBooleanExpr(self, ctx):
         opname = ctx.op.text
         if opname in ('true', 'false'):
@@ -164,7 +205,7 @@ class GDTLAbstractSyntaxTreeExtractor(GDTLVisitor):
                                           float(ctx.right.getText()) )) )
         self.ap[pred.ap] = pred
         return pred
-    
+
     def visitParprop(self, ctx):
         return self.visit(ctx.child)
 
@@ -172,19 +213,19 @@ class GDTLAbstractSyntaxTreeExtractor(GDTLVisitor):
 def gdtl2ltl(formula):
     lexer = GDTLLexer(InputStream(formula))
     tokens = CommonTokenStream(lexer)
-    
+
     parser = GDTLParser(tokens)
     t = parser.prop()
-    
+
     ast_parser = GDTLAbstractSyntaxTreeExtractor()
     ast = ast_parser.visit(t)
     ap = ast_parser.ap
-    
+
     return ast, ap
 
 
 class PredicateContext(object):
-    
+
     mah = lambda x, P, xc: mahalanobis(x, xc, np.asarray(np.mat(P).I))
     functions = {'det': np.linalg.det,
                  'tr': np.trace,
@@ -193,12 +234,12 @@ class PredicateContext(object):
                  'box': lambda x, xc, s: (np.max(2*np.abs(np.asarray(x)
                                                 - np.asarray(xc))/np.array(s)))
     }
-    
+
     def __init__(self, attr_dict=None):
         self.context = dict(PredicateContext.functions)
         if attr_dict:
             self.context.update(attr_dict)
-    
+
     def evalPred(self, pred, state, cov, state_label='x', cov_label='P', attr_dict=None):
         lcontext = {state_label: np.asarray(state), cov_label: np.mat(cov)}
         if attr_dict:
@@ -209,9 +250,9 @@ if __name__ == '__main__':
     formula = "!(x < 10) && F y > 2 || G z<=8"
     ltl, ap = gdtl2ltl(formula)
     print ltl.formulaString(ltl=True)
-    
+
     pc = PredicateContext()
-    
+
     for pred in ['tr(P) < 2', 'tr(P) < 3', 'det(P) < 1', 'det(P)<1.01',
                  'mah(x, P, [1, 1]) < 1.41', 'mah(x, P, [1, 1]) < 1.42',
                  'theta < 2', 'theta < 2.01', 'norm(x) < 2', 'norm(x) < 3',
@@ -219,7 +260,7 @@ if __name__ == '__main__':
         ltl, _ = gdtl2ltl(pred)
         print pc.evalPred(ltl, state=[1, 2], cov=[[2, 0], [0, 0.5]], attr_dict={'theta':2})
         print
-    
+
     formula = (("G ! ({obs}) "
                 + "&& G F ( {a} && ( ! ({d2}) U {b} ) ) "
                 + "&& G F ( {b} && ( ! ({d1}) U {a} ) ) "
@@ -240,4 +281,3 @@ if __name__ == '__main__':
     print ltl.treeString()
     print
     print ltl.formulaString(ltl=True)
-    

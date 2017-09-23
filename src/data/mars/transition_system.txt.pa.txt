@@ -1,0 +1,211 @@
+pa:
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [2.42581754408364, 1.61231662211585, -0.7778140425935813]
+    - T0_S7
+  - !!python/tuple
+    - !!python/tuple [2.7843811141556003, 2.121704313146049, -0.23807882030663977]
+    - T0_S7
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [2.42581754408364, 1.61231662211585, -0.7778140425935813]
+    - T0_S7
+  - !!python/tuple
+    - !!python/tuple [1.8063010720270245, 1.9135230668971042, -0.3927200848166064]
+    - T0_S7
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [1.8063010720270245, 1.9135230668971042, -0.3927200848166064]
+    - T0_S7
+  - !!python/tuple
+    - !!python/tuple [2.7843811141556003, 2.121704313146049, -0.23807882030663977]
+    - T0_S7
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [1.8063010720270245, 1.9135230668971042, -0.3927200848166064]
+    - T0_S7
+  - !!python/tuple
+    - !!python/tuple [2.42581754408364, 1.61231662211585, -0.7778140425935813]
+    - T0_S7
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [1.8063010720270245, 1.9135230668971042, -0.3927200848166064]
+    - T0_S7
+  - !!python/tuple
+    - !!python/tuple [0.9535545057983591, 1.391217319384002, -0.7113972747041895]
+    - T0_S7
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.5, 0.5, 0.0]
+    - T0_S7
+  - !!python/tuple
+    - !!python/tuple [0.9535545057983591, 1.391217319384002, -0.7113972747041895]
+    - T0_S7
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.6487869388058337, 2.343633578280004, -0.9702198112317046]
+    - T0_S7
+  - !!python/tuple
+    - !!python/tuple [0.9535545057983591, 1.391217319384002, -0.7113972747041895]
+    - T0_S7
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.5, 0.5, 0.0]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [0.9535545057983591, 1.391217319384002, -0.7113972747041895]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [1.8063010720270245, 1.9135230668971042, -0.3927200848166064]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [0.9535545057983591, 1.391217319384002, -0.7113972747041895]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [1.8063010720270245, 1.9135230668971042, -0.3927200848166064]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [2.7843811141556003, 2.121704313146049, -0.23807882030663977]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [1.8063010720270245, 1.9135230668971042, -0.3927200848166064]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [2.42581754408364, 1.61231662211585, -0.7778140425935813]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [2.7843811141556003, 2.121704313146049, -0.23807882030663977]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [1.8063010720270245, 1.9135230668971042, -0.3927200848166064]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [2.7843811141556003, 2.121704313146049, -0.23807882030663977]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [2.42581754408364, 1.61231662211585, -0.7778140425935813]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [2.42581754408364, 1.61231662211585, -0.7778140425935813]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [1.8063010720270245, 1.9135230668971042, -0.3927200848166064]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [2.42581754408364, 1.61231662211585, -0.7778140425935813]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [2.7843811141556003, 2.121704313146049, -0.23807882030663977]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.9535545057983591, 1.391217319384002, -0.7113972747041895]
+    - T0_S7
+  - !!python/tuple
+    - !!python/tuple [1.8063010720270245, 1.9135230668971042, -0.3927200848166064]
+    - T0_S7
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.9535545057983591, 1.391217319384002, -0.7113972747041895]
+    - T0_S7
+  - !!python/tuple
+    - !!python/tuple [0.5, 0.5, 0.0]
+    - T0_S7
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.9535545057983591, 1.391217319384002, -0.7113972747041895]
+    - T0_S7
+  - !!python/tuple
+    - !!python/tuple [0.6487869388058337, 2.343633578280004, -0.9702198112317046]
+    - T0_S7
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [2.7843811141556003, 2.121704313146049, -0.23807882030663977]
+    - T0_S7
+  - !!python/tuple
+    - !!python/tuple [2.42581754408364, 1.61231662211585, -0.7778140425935813]
+    - T0_S7
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [2.7843811141556003, 2.121704313146049, -0.23807882030663977]
+    - T0_S7
+  - !!python/tuple
+    - !!python/tuple [1.8063010720270245, 1.9135230668971042, -0.3927200848166064]
+    - T0_S7
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.9535545057983591, 1.391217319384002, -0.7113972747041895]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [0.5, 0.5, 0.0]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.9535545057983591, 1.391217319384002, -0.7113972747041895]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [1.8063010720270245, 1.9135230668971042, -0.3927200848166064]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.9535545057983591, 1.391217319384002, -0.7113972747041895]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [0.6487869388058337, 2.343633578280004, -0.9702198112317046]
+    - T0_S7
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+pa_init: !!python/tuple
+- !!python/tuple [0.5, 0.5, 0.0]
+- T0_init

@@ -1,0 +1,122 @@
+!!python/object:__main__.Mission
+name: "Mars mission."
+description: "Scenario presented as an example in the ? paper."
+specification: "F A(x) > 0 && F B(x) > 0 && (
+                  ((Obs(x) < 1) U (A(x) > 0))
+                  && ((Obs(x) < 1) U (B(x) > 0))
+                )"
+predicates: "/home/cristi/Dropbox/work/workspace_linux_desktop/gdtl-firm/src/data/mars/predicates.py"
+specification_type: "syntactically co-safe"
+environment :
+  bases: {}
+  regions :
+    A1 :
+      position : [0.5, 3.2, 0]
+      color : [1, 1, 0, 0.5]
+      label : A
+      label_position : [0, 0]
+      sides : [0.6, 0.6]
+      show_dot: False
+    A2 :
+      position : [2.2, 2.15, 0]
+      color : [1, 1, 0, 0.5]
+      label : A
+      label_position : [0, 0]
+      sides : [1.2, 0.3]
+      show_dot: False
+    A3 :
+      position : [4.3, 0.3, 0]
+      color : [1, 1, 0, 0.5]
+      label : A
+      label_position : [0, 0]
+      sides : [0.4, 0.4]
+      show_dot: False
+    B1 :
+      position : [2.2, 0.4, 0]
+      color : [0, 1, 0, 0.5]
+      label : B
+      label_position : [0, 0]
+      sides : [1.2, 0.4]
+      show_dot: False
+    B2 :
+      position : [4.3, 3.3, 0]
+      color : [0, 1, 0, 0.5]
+      label : B
+      label_position : [0, 0]
+      sides : [0.6, 0.4]
+      show_dot: False
+    Obs1:
+      position : [1.15, 1.8, 0]
+      color : [0.4, 0.4, 0.4, 0.5]
+      label : Obs
+      label_position : [0, 0]
+      sides : [0.3, 2.0]
+      show_dot: False
+    Obs2:
+      position : [2.3, 2.6, 0]
+      color : [0.4, 0.4, 0.4, 0.5]
+      label : Obs2
+      label_position : [0, 0]
+      sides : [2.0, 0.4]
+      show_dot: False
+    Shadow:
+      position : [3.85, 1.8, 0]
+      color : [0.6, 0.6, 0.6, 0.5]
+      label : Shadow
+      label_position : [0, 0]
+      sides : [1.9, 3.6]
+      show_dot: False
+  boundary : {limits: [[0, 0], [4.8, 3.6]], color: [0, 0, 0, 1]}
+#  background : '/home/cristi/Dropbox/work/workspace_linux/PyFIRM/src/data/bu/imMap_annot.png'
+  directed: False
+no_active_vehicles : 1
+vehicle_size : 0.2
+vehicles :
+  Ground1 :
+      initial_state: [0.5, 0.5, 0]
+      initial_covariance: [[0.1, 0, 0], [0, 0.1, 0], [0, 0, 0.1]]
+      motion_model:
+        min_linear_velocity: 0 #300
+        max_linear_velocity: 0.2 # 0.4 [m/s]
+        max_angular_velocity: 1.047 # pi/3 [rad/s]
+        dt: 0.5
+        process_noise_covariance : [[0.0001, 0, 0], [0, 0.0001, 0], [0, 0, 0.0001]]#[[0.3, 0], [0, 0.3]]
+        ROS_control_send_rate: 2
+        ROS_control_publisher_name: GroundCommandX80Pro2
+        state_label: "x"
+        covariance_label: "P"
+      observation_model:
+        observation_jacobian: [[1, 0, 0], [0, 1, 0], [0, 0, 1]] #[[1, 0], [0, 1]]
+        noise_jacobian: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]#[[1, 0], [0, 1]]
+        observation_noise_covariances: [[[0.001, 0, 0], [0, 0.001, 0], [0, 0, 0.001]], [[0.001, 0, 0], [0, 0.001, 0], [0, 0, 0.001]], [[0.001, 0, 0], [0, 0.001, 0], [0, 0, 0.001]], [[0.001, 0, 0], [0, 0.001, 0], [0, 0, 0.001]], [[0.001, 0, 0], [0, 0.001, 0], [0, 0, 0.001]]]
+        output_label: "z"
+      color: [1, 0, 0, 1]
+      size: 0.15
+timestep: 3
+simulation:
+  loops: 10
+  trajectory_file: trajectories.txt
+  vehicle_label_position: [0.5, 0.2, 0, 0.3, 0.25, 0]
+  video: {file: simple_scenario.mov, interval: 1000}
+  figures: {filename_template: "simple_scenario_frame_{frame:03d}.png"}
+  loop_figure: "simple_scenario_data.png"
+planning:
+  seed: 2003
+  planning_steps: 30
+  planning_time: 1200
+  sat_probability_threshold: 0.8
+  solution_filename: 'transition_system_{}.txt'
+  setup:
+    nearest_neighbors:
+      max_number_of_neighbors: 6
+      max_connection_radius: 1.0
+    steering_dist_bounds: [0.4, 0.99999]
+    controller:
+      control_queue_size: 10
+      state_weight: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+      control_weight: [[1, 0], [0, 1]] #[[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+      norm_covariance_weight: 1.0
+      norm_mean_weight: 2.0
+      norm_state_weights: [0.4, 0.4, 0] #[0.5, 0.5]
+      reach_dist:  0.1
+    number_monte_carlo_trials: 15

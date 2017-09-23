@@ -7,7 +7,7 @@
 SRC_PATH=.
 BIN_PATH=bin/
 ANTLR_PATH=lib/
-ANTLR=antlr-4.5.1-complete.jar
+ANTLR=antlr-4.7-complete.jar
 ANTLR_GEN=java org.antlr.v4.Tool
 -->
     <description>
@@ -18,7 +18,7 @@ ANTLR_GEN=java org.antlr.v4.Tool
     <property name="bin"   location="bin" />
     <property name="lib"   location="lib" />
     <property name="dist"  location="dist" />
-    <property name="antlr" location="${lib}/antlr-4.5.1-complete.jar" />
+    <property name="antlr" location="${lib}/antlr-4.7-complete.jar" />
     <property name="main-program" value="gdtl" />
     
     <target name="init">

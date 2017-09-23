@@ -30,7 +30,7 @@ import yaml
 
 from lomap import Ts
 from lomap import Markov as MDP
-from lomap import Rabin
+from lomap import Rabin, Fsa
 from lomap import Timer
 from gdtl import gdtl2ltl, PredicateContext
 
@@ -41,7 +41,7 @@ from controller import NullController
 from controller import Controller
 from filter import LinearizedKF, ExtendedKF
 
-
+# FIXME: path is misleading, it should be policy instead
 Solution = namedtuple('Solution', ['path', 'prob'])
 
 
@@ -57,11 +57,11 @@ class FStrategy(object):
         self.max_no_neighbors = no_neighbors
         self.max_dist = radius
         self.states = [] # TODO: can I get rid of this? maybe take it from ts
-    
+
     def add(self, state):
         self.states.append(state)
         self.nn = NearestNeightbor([s.conf[:2] for s in self.states])
-    
+
     def nearest(self, state, ret_dist=False):
         s, d = None, -1
         if self.nn:
@@ -74,7 +74,7 @@ class FStrategy(object):
         if ret_dist:
             return s, d
         return s
-    
+
     def near(self, state):
         if self.nn:
             _, idxs = self.nn.query(state.conf[:2], k=self.max_no_neighbors,
@@ -85,79 +85,95 @@ class FStrategy(object):
 
 class FIRM(object):
     '''Feedback Information RoadMap planner'''
-    
+
     def __init__(self, env, motion_model, observation_model, parameters):
         '''Constructor'''
-        self.name = "LTL FIRM Planner"
-        
+        self.name = "GDTL FIRM Planner"
+
         self.bounds = np.array(env['boundary']['limits']).reshape(2, 2)
         self.motion_model = motion_model
         self.observation_model = observation_model
-        
+
         # sampler used for generating valid samples in the state space
         self.sampler = None
-        
+
         nn = parameters['nearest_neighbors']
         self.connection_strategy = FStrategy(nn['max_number_of_neighbors'],
                                              nn['max_connection_radius'])
-        self.min_steering_dist, self.steering_radius = parameters['steering_dist_bounds']
-        
+        self.min_steering_dist, self.steering_radius = \
+                                            parameters['steering_dist_bounds']
+
         # TS and Product MDP
         self.ts = Ts(multi=False)
         self.pa = MDP(multi=False)
-        self.pa.rabin_states = defaultdict(set)
+        self.pa.automaton_states = defaultdict(set)
         # set specification
         self.specification = None
         # number of Monte Carlo simulations
         self.numParticles = parameters['number_monte_carlo_trials']
-        
+
         # state and control weights for the LQR controllers
         cc = parameters['controller'] 
         self.state_weight = np.array(cc['state_weight'])
         self.control_weight = np.array(cc['control_weight'])
         assert np.all(np.linalg.eigvals(self.state_weight) > 0) # check pdef
         assert np.all(np.linalg.eigvals(self.control_weight) > 0) # check pdef
-        
+
         self.cnt = it.count()
-    
+
     def setSpecification(self, specification, state_label='x', cov_label='P',
                          predicates=None):
         '''Performs several operations to setup the planner's specification. The
         specification given as a GDTL formula is augmented with the boundary
         condition. Afterwards, it is translated to LTL, and the bijection
         between atomic propositions and predicates is computed. The obtained LTL
-        specification is converted to a Deterministic Rabin Automaton. Lastly,
-        the predicate evaluation context is created and saved.
+        specification is converted to a Deterministic Rabin Automaton or Finite
+        State Automaton. Lastly, the predicate evaluation context is created
+        and saved.
         '''
         if specification is None:
             return
-        
+
         self.specification = specification
         # add boundary constraint to specification
-        self.specification += ' && G (norm({}) <= 1)'.format(state_label)
+        # FIXME: boundary constraint should be optional and enforced either
+        # with always or until operators
+        if False:
+            self.specification += ' && G (norm({}) <= 1)'.format(state_label)
         # convert GDTL specification to LTL
         self.tl, self.ap = gdtl2ltl(formula=self.specification)
-        # compute Rabin automaton from LTL formula 
-        self.rabin = Rabin(multi=False)
-        ltl_formula = self.tl.formulaString(ltl=True)
-        self.rabin.rabin_from_formula(formula=ltl_formula)
-        logging.info('LTL formula from GDTL: %s', ltl_formula)
-        logging.info('Rabin size: (%d, %d)', self.rabin.g.number_of_nodes(),
-                     self.rabin.g.number_of_edges())
         logging.info('Predicate to AP map: %s', self.ap)
+        # compute specification automaton from LTL formula
+        ltl_formula = self.tl.formulaString(ltl=True)
+        logging.info('LTL formula from GDTL: %s', ltl_formula)
+
+        # TODO: this holds only for the simple setup, should be removed in
+        # future versions
+        assert self.tl.isSynCoSafe(), 'Expected scGDTL formula!'
+
+        if self.tl.isSynCoSafe():
+            self.automaton = Fsa(multi=False)
+        else:
+            self.automaton = Rabin(multi=False)
+        self.automaton.from_formula(formula=ltl_formula)
+        if self.tl.isSynCoSafe():
+            self.automaton.add_trap_state()
+            self.automaton.final = [(self.automaton.final, {'trap'})]
+        logging.info('Automaton size: %s', self.automaton.size())
         # set predicate evaluation context
         low, high = self.bounds
         extend = high - low
         xc = (low + high)/2.0
         if not predicates:
             predicates = dict()
-        predicates['norm'] = lambda x: np.linalg.norm(np.array(x[:2]-xc)/extend,
-                                                      ord=np.infty)
+        # FIXME: add boundary predicate
+#         predicates['norm'] = lambda x: np.linalg.norm(np.array(x[:2]-xc)/extend,
+#                                                       ord=np.infty)
         self.context = PredicateContext(predicates)
         # save state and covariance labels
         self.state_label = state_label
         self.covariance_label = cov_label
-    
+
     def getAPs(self, belief):
         '''Computes the set of atomic propositions that are true at the given
         belief node.
@@ -165,10 +181,10 @@ class FIRM(object):
         # update predicate evaluation context with custom symbols
         return set([ap for ap, pred in self.ap.iteritems()
                            if self.context.evalPred(pred,
-                                       belief.conf[:2], belief.cov[:2, :2], #TODO: make this general
+                                       belief.conf, belief.cov,
                                        state_label=self.state_label,
                                        cov_label=self.covariance_label)])
-    
+
     def addState(self, state, initial=False, copy=True):
         '''Adds a state to the transition system.
         Note: By default, a frozen copy of the state is added to the transition
@@ -192,14 +208,16 @@ class FIRM(object):
             self.ts.init[s] = 1
         # update the connection strategy
         self.connection_strategy.add(s)
-    
+
     def processTrajectory(self):
+        '''TODO: add description
+        '''
         traj = deque()
         while True:
             state = yield traj
             props = self.getAPs(state)
             traj.append((state, props))
-    
+
     def addTransition(self, a, b):
         '''Add a transition from state a to b in the transition system.'''
         controller = self.generateEdgeController(a, b)
@@ -207,15 +225,16 @@ class FIRM(object):
         with Timer('compute trajectories for edge'):
             randomStartStates = [a.copy() for _ in xrange(self.numParticles)]
             [r.setConf(mv_gauss(mean=a.conf, cov=a.cov)) for r in randomStartStates]
-            
-            processTrajectories = [self.processTrajectory() for _ in xrange(self.numParticles)]
+             
+            processTrajectories = [self.processTrajectory()
+                                            for _ in xrange(self.numParticles)]
             map(next, processTrajectories) # initialize trajectory processing
             #TODO: add edge controller
             trajectories = [nc.execute(r, pt)[1]
                    for r, pt in it.izip(randomStartStates, processTrajectories)]
         self.ts.g.add_edge(a, b, attr_dict={'controller': controller,
                                             'trajectories': trajectories})
-    
+
     def generateNodeController(self, state): #, nodeController):
         '''Generates the node controller that stabilizes the robot at the node'''
         # construct a linear Kalman filter
@@ -230,15 +249,15 @@ class FIRM(object):
             raise AssertionError('Assumes that all states are observable!')
         # set the covariance
         state.cov = stationaryCovariance
-        # create the node controller: SLQR + LKF
+        # create the node controller: SLQR + LKF #TODO: test this
 #         lqr = OffAxisSLQRController(self.motion_model, self.observation_model,
-#                              state, self.state_weight, self.control_weight) #TODO: test this
+#                              state, self.state_weight, self.control_weight)
 #         lqr = SLQRController(self.motion_model, self.observation_model,
 #                              state, self.state_weight, self.control_weight)
         lqr = SwitchingController(self.motion_model, self.observation_model,
                                   state, self.state_weight, self.control_weight)
         return Controller(self.motion_model, self.observation_model, lqr, lkf)
-    
+
     def generateEdgeController(self, start, target):
         '''Generates the edge controller that drives the robot from the start
         node to the target node of edge.
@@ -246,20 +265,21 @@ class FIRM(object):
         assert (start is not None) and (target is not None)
         ekf = ExtendedKF(self.observation_model, self.motion_model)
 #         lqr = TrackingLQRController(self.motion_model, self.observation_model,
-        lqr = NullController(self.motion_model, self.observation_model, #TODO: remove this if it does nothing
+        #TODO: remove this if it does nothing
+        lqr = NullController(self.motion_model, self.observation_model,
                                     transition=(start, target),
                                     stateWeight=self.state_weight,
                                     controlWeight=self.control_weight)
         # create the edge controller: Tracking LQR + EKF
         return Controller(self.motion_model, self.observation_model, lqr, ekf)
-    
+
     def canSteer(self, src, dest):
         '''Checks if the system can steer from the source state to the
         destination state.
         '''
         # assumes that steering is always possible
         return True
-    
+
     def steer(self, src, dest):
         '''Steers the system from the source state to the destination state.'''
         dist = src.distanceTo(dest)
@@ -271,7 +291,7 @@ class FIRM(object):
             new.freeze()
             return new
         return dest
-    
+
     def extend(self):
         '''Generate a state near one in the transition system.'''
         new_state = None
@@ -282,37 +302,37 @@ class FIRM(object):
 #             print 'extend: nearest:', state, d
             if d > self.min_steering_dist:
                 new_state = self.steer(src=state, dest=random_state)
-                if not self.obstacles(new_state.conf[:2]): #TODO: make this general
+                if not self.obstacles(new_state.conf): #TODO: make this general
                     break
         # steer towards the random state
         return new_state
-    
+
     def initPA(self):
         '''Initialized the Product MDP.'''
         assert len(self.ts.init) == 1
-        assert self.rabin is not None
-        
+        assert self.automaton is not None
+
         if not self.pa.init:
             ts_init = next(self.ts.init.iterkeys())
-            rabin_init = next(self.rabin.init.iterkeys())
-            self.pa.init[(ts_init, rabin_init)] = 1
+            automaton_init = next(self.automaton.init.iterkeys())
+            self.pa.init[(ts_init, automaton_init)] = 1
         else:
-            ts_init, rabin_init = next(self.pa.init.iterkeys())
-        if not self.pa.rabin_states.has_key(ts_init):
-            self.pa.rabin_states[ts_init] = set([rabin_init])
+            ts_init, automaton_init = next(self.pa.init.iterkeys())
+        if not self.pa.automaton_states.has_key(ts_init):
+            self.pa.automaton_states[ts_init] = set([automaton_init])
         # initialize SCCs
         self.initSCCs()
-    
+
     def trajectoryAnnotation(self, s_u, trajectory):
-        edge = np.zeros((len(self.rabin.final), 2), np.bool)
+        edge = np.zeros((len(self.automaton.final), 2), np.bool)
         s_v = s_u
         for _, props in trajectory:
-            next_rabin_states = self.rabin.next_states_of_rabin(s_v, props)
-            assert len(next_rabin_states) == 1
-            s_v = next_rabin_states[0]
-            edge |= [(s_v in F, s_v in B) for F, B in self.rabin.final]
+            next_automaton_states = self.automaton.next_states(s_v, props)
+            assert len(next_automaton_states) == 1
+            s_v = next_automaton_states[0]
+            edge |= [(s_v in F, s_v in B) for F, B in self.automaton.final]
         return edge, s_v
-    
+
     def computeProbabilities(self, start, s_u, target):
         '''Computes reachability and satisfaction probabilities of edges in the
         product MDP.
@@ -329,7 +349,7 @@ class FIRM(object):
                 sps[s_v] = edge.astype(np.float)
         npart = self.numParticles
         pa_start = (start, s_u)
-        # returns Rabin state and PA transition sets
+        # returns automaton state and PA transition sets
         return (tps.keys(),
                 [(pa_start, (target, s_v),
                   {'prob': tp/float(npart), 'sat': sps[s_v]/npart})
@@ -337,7 +357,7 @@ class FIRM(object):
     
     def updatePA(self, u, v):
         '''Updates the product automaton using the TS transition (u, v).'''
-        assert u in self.pa.rabin_states
+        assert u in self.pa.automaton_states
         
 #         print 'pre update:', u.conf, v.conf
 #         for ts_state, r_state in self.pa.g.nodes_iter():
@@ -347,7 +367,7 @@ class FIRM(object):
 #             print 'edge:', (qu.conf, s_qu), (qv.conf, s_qv)
 #         print
         
-        stack = deque([(u, s_u, v) for s_u in self.pa.rabin_states[u]])
+        stack = deque([(u, s_u, v) for s_u in self.pa.automaton_states[u]])
 #         delta = []
         while stack:
 #             print stack
@@ -362,9 +382,9 @@ class FIRM(object):
 #             for (qu, s_qu), (qv, s_qv), d in transitions:
 #                 print 'transition:', (qu.conf, s_qu), (qv.conf, s_qv), d
 #             print
-            # update PA map from ts states to rabin states
-            self.pa.rabin_states[target].update(r_states)
-#             print r_states, self.pa.rabin_states[target]
+            # update PA map from ts states to automaton states
+            self.pa.automaton_states[target].update(r_states)
+#             print r_states, self.pa.automaton_states[target]
 #             for (x1, s1), (x2, s2), d in transitions:
 #                 print (x1.conf, s1), (x2.conf, s2), d
 #             print
@@ -394,10 +414,12 @@ class FIRM(object):
     
     def initSCCs(self):
         '''Initializes the SCCs for each F,B pair in the acceptance set.'''
-        self.pa.subgraphs = [nx.DiGraph() for _ in self.rabin.final]
-        self.pa.sccs = [[] for _ in self.rabin.final]
-        self.pa.good_transitions  = [[] for _ in self.rabin.final]
-        self.pa.good_sccs = [[] for _ in self.rabin.final]
+        self.pa.subgraphs = [nx.DiGraph() for _ in self.automaton.final]
+        self.pa.good_transitions  = [[] for _ in self.automaton.final]
+        assert len(self.pa.subgraphs) == 1 and len(self.pa.good_transitions) == 1
+        return # TODO: make this work for general GDTL, and not just scGDTL
+        self.pa.sccs = [[] for _ in self.automaton.final]
+        self.pa.good_sccs = [[] for _ in self.automaton.final]
     
     def updateSCCs(self, transitions):
         '''Updates the subgraphs and SCCs associated with each pair in the
@@ -421,12 +443,15 @@ class FIRM(object):
 #                     self.pa.subgraphs[k].add_edge(u, v, prob=d['prob'])
 #                 if pathProb[0]: # intersects the good set, save it
 #                     self.pa.good_transitions[k].append((u, v))
+        assert len(self.pa.subgraphs) == 1 and len(self.pa.good_transitions) == 1
+        return # TODO: make this work for general GDTL, and not just scGDTL
         # update SCCs
         for k, subg in enumerate(self.pa.subgraphs): #TODO: check this
             self.pa.sccs[k] = map(tuple, nx.strongly_connected_components(subg))
         # compute good SCCs
-        self.pa.good_sccs = [set() for _ in self.rabin.final]
-        for trs, sccs, gsccs in it.izip(self.pa.good_transitions, self.pa.sccs, self.pa.good_sccs):
+        self.pa.good_sccs = [set() for _ in self.automaton.final]
+        for trs, sccs, gsccs in it.izip(self.pa.good_transitions,
+                                        self.pa.sccs, self.pa.good_sccs):
             for u, v in trs:
                 gsccs.update(tuple([scc for scc in sccs if (u in scc) and (v in scc)]))
     
@@ -436,8 +461,18 @@ class FIRM(object):
         '''
         if self.found:
             return True
-        if any(self.pa.good_sccs):
-            self.found = True
+        if False: #TODO: make this work for general case
+            if any(self.pa.good_sccs):
+                self.found = True
+        else:
+#             g = False
+#             for u, v, d in self.pa.g.edges_iter(data=True):
+#                 assert len(d['sat']) == 1
+#                 if d['sat'][0][0] > 0:
+#                     print 'found something:', g, '>>', u, v
+            assert len(self.pa.subgraphs) == 1 and len(self.pa.good_transitions) == 1
+            if any(self.pa.good_transitions[0]):
+                self.found = True
         return self.found
     
     def solveDP(self):
@@ -455,7 +490,8 @@ class FIRM(object):
                 nbs = (nb for nb in self.pa.subgraphs[k].neighbors_iter(state)
                                                     if nb in good_sccs_state[0])
                 print 'State in good SCCs:', state, nbs.next()[0]
-                optimal_actions[state] = nbs.next()[0] #TODO: may need to create paths inside end component
+                #TODO: may need to create paths inside end component
+                optimal_actions[state] = nbs.next()[0]
             else:
                 costs = dict()
                 for _, nb, d in self.pa.g.edges_iter([state], data=True):
@@ -470,7 +506,7 @@ class FIRM(object):
         opt_cost_to_go = -1
         optimal_actions = None
         init_pa_state = iter(self.pa.init).next()
-        for k in range(len(self.rabin.final)):
+        for k in range(len(self.automaton.final)):
             print 'Pair', k
             costs_map = dict()
             actions_map = dict()
@@ -484,46 +520,78 @@ class FIRM(object):
         
         return Solution(optimal_actions, prob=opt_cost_to_go)
     
+    def computePolicy(self):
+        assert self.existsSatisfyingRun()
+
+        # TODO: solve lp here for optimal policy
+
+        # HACK: implemented a policy, not necessary max sat prob
+        policy = {}
+        for _, v in self.pa.good_transitions[0]:
+            policy[v] = [v, 1]
+
+        stack = policy.keys()
+        while stack:
+            v = stack.pop()
+            assert v in policy
+
+            for u in self.pa.g.predecessors_iter(v):
+                if u in policy:
+                    if self.pa.g[u][v]['prob'] > policy[u][1]:
+                        policy[u] = [v, self.pa.g[u][v]['prob']]
+                else:
+                    stack.append(u)
+                    policy[u] = [v, self.pa.g[u][v]['prob']]
+
+        return Solution(path=policy, prob=1) #FIXME: Again a hack, prob is not 1
+
     def solve(self, steps=1, maxtime=300, epsilon=0.01): 
         '''Solves the motion planning problem.'''
         if not self.ts.init:
             return False
         self.initPA()
-        
+
         self.solution = Solution(None, prob=-1)
         self.found = False
-        
-        logging.info("%s: Initial state:\n%s", self.name, next(self.ts.init.iterkeys()))
-        
+
+        logging.info("%s: Initial state:\n%s",
+                     self.name, next(self.ts.init.iterkeys()))
+
         nrStartStates = self.ts.g.number_of_nodes()
         logging.info("%s: Starting with %u states", self.name, nrStartStates)
-        
+
         t0 = time.time()
         logging.info("%s: starting time %f ", self.name, t0)
-        
+
         trtime = []
-        
+
         for _ in xrange(steps):
             if time.time() - t0 > maxtime:
                 logging.info("%s: reached maximum allowed time", self.name)
                 return False
-            
+
             xn = self.extend()
             near_states = self.connection_strategy.near(xn)
             assert len(near_states) > 0
             transitions = [(x, xn) for x in near_states if self.canSteer(x, xn)]
             transitions += [(xn, x) for x in near_states if self.canSteer(xn, x)]
-            
+
             self.addState(xn, copy=False)
-            
-            
+
+
             for u, v in transitions:
                 t1 = time.time()
                 self.addTransition(u, v)
                 self.updatePA(u, v)
                 trtime.append(time.time()-t1)
-            
+
             if self.existsSatisfyingRun():
+                solution = self.computePolicy()
+                if self.solution.prob < solution.prob:
+                    self.solution = solution
+                if self.solution.prob > epsilon:
+                    logging.info("%s: found solution with probability %f",
+                                 self.name, solution.prob)
                 break
 #                 # solve dynamic program to get MP satisfying policy
 # #                 return True
@@ -539,13 +607,14 @@ class FIRM(object):
 #                         logging.info('state: %s -> action: %s', (u.conf, s_u), action.conf)
 #                     return True
             print 'Found:', self.found
-        
+
         print '>>>>'
         logging.info('Found: %s', str(self.found))
 #         print 'Prob:', self.solution.prob
 #         print 'OptimalActions:', self.solution.path
-        logging.info('TS: (%d, %d)', self.ts.g.number_of_nodes(), self.ts.g.number_of_edges())
-        logging.info('PA: (%d, %d)', self.pa.g.number_of_nodes(), self.pa.g.number_of_edges())
+        logging.info('TS: %s', self.ts.size())
+        logging.info('PA.as: %d', len(self.pa.automaton_states))
+        logging.info('PA: %s', self.pa.size())
         logging.info('Mean add transition time: %f', np.mean(trtime))
         logging.info('Overall execution time: %f', time.time() - t0)
 #         print 'ptime:', ptime
@@ -565,8 +634,12 @@ class FIRM(object):
         for s, d in self.ts.g.nodes_iter(data=True):
             states_id_map[d['id']] = s
         
-        self.solution = Solution([states_id_map[i] for i in [0, 1, 2, 16, 20, 23, 5, 7, 17, 11, 14, 22, 8, 6, 0, 1, 2, 16, 20, 23, 5, 7, 17, 11, 14, 22, 8, 6, 0]], 1)
-        print [states_id_map[i].conf for i in [0, 1, 2, 16, 20, 23, 5, 7, 17, 11, 14, 22, 8, 6, 0, 1, 2, 16, 20, 23, 5, 7, 17, 11, 14, 22, 8, 6, 0]]
+        self.solution = Solution([states_id_map[i] for i in [0, 1, 2, 16, 20,
+            23, 5, 7, 17, 11, 14, 22, 8, 6, 0, 1, 2, 16, 20, 23, 5, 7, 17, 11,
+            14, 22, 8, 6, 0]], 1)
+        print [states_id_map[i].conf for i in [0, 1, 2, 16, 20, 23, 5, 7, 17,
+            11, 14, 22, 8, 6, 0, 1, 2, 16, 20, 23, 5, 7, 17, 11, 14, 22, 8, 6,
+            0]]
         
 #         import matplotlib.pyplot as plt
 #         plt.figure()
@@ -580,8 +653,8 @@ class FIRM(object):
         self.observation_model.executionMode(isSimulation=False)
         
         # set initial state
-        updatedState, rabin_init = next(self.pa.init.iterkeys())
-        process = self.processTrajectory(rabin_init)
+        updatedState, automaton_init = next(self.pa.init.iterkeys())
+        process = self.processTrajectory(automaton_init)
         process.next()
         for s, t in it.izip(self.solution.path[:-1], self.solution.path[1:]):
             ec = self.ts.g[s][t]['controller'] # edge controller
@@ -603,7 +676,8 @@ class FIRM(object):
         ts_init = tuple(map(float, next(self.ts.init.iterkeys()).conf))
         pa_edges = [((tuple(map(float, u.conf)), s_u),
                      (tuple(map(float, v.conf)), s_v),
-                     {'prob': float(d['prob']), 'sat': tuple(map(float, d['sat'].flatten()))})
+                     {'prob': float(d['prob']),
+                      'sat': tuple(map(float, d['sat'].flatten()))})
                     for (u, s_u), (v, s_v), d in self.pa.g.edges(data=True)]
         pa_init = iter(self.pa.init).next()
         pa_init = (tuple(map(float, pa_init[0].conf)), pa_init[1])
@@ -636,15 +710,18 @@ class FIRM(object):
 #         with open(pathToFile, 'r') as fin:
 #             data = yaml.load(fin)
 #         
-#         nodes = set([SE2BeliefState(u[0], u[1], freeze=True) for u, _ in data['ts']]
-#                     + [SE2BeliefState(v[0], v[1], freeze=True) for _, v in data['ts']])
+#         nodes = set([SE2BeliefState(u[0], u[1], freeze=True)
+#                                         for u, _ in data['ts']]
+#                     + [SE2BeliefState(v[0], v[1], freeze=True)
+#                                         for _, v in data['ts']])
 #         init_conf = iter(self.ts.init).next().conf
 #         print 'nr nodes:', len(nodes)
 #         for u in nodes:
 #             if np.all(u.conf != init_conf):
 #                 self.addState(u)
 #         
-#         edges = [(SE2BeliefState(u[0], u[1], freeze=True), SE2BeliefState(v[0], v[1], freeze=True))
+#         edges = [(SE2BeliefState(u[0], u[1], freeze=True),
+#                    SE2BeliefState(v[0], v[1], freeze=True))
 #                     for u, v in data['ts']]
 #         print self.ts.g.number_of_nodes()
 #         for u, v in edges:

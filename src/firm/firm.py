@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-from gc import collect
-from multiprocessing.pool import mapstar
 license_text='''
     Module implements GDTL-FIRM algorithm.
     Copyright (C) 2016  Cristian Ioan Vasile <cvasile@bu.edu>

@@ -76,7 +76,7 @@ environment :
   boundary : {limits: [[0, 0], [4.8, 3.6]], color: [0, 0, 0, 1]}
 #  background : 'path_to_image.png'
   directed: False
-no_active_vehicles : 1
+no_active_vehicles : 2
 vehicle_size : 0.2
 vehicles :
   Ground1 :
@@ -88,8 +88,6 @@ vehicles :
         max_angular_velocity: 1.047 # pi/3 [rad/s]
         dt: 0.5
         process_noise_covariance : [[0.0001, 0, 0], [0, 0.0001, 0], [0, 0, 0.0001]]
-        ROS_control_send_rate: 2
-        ROS_control_publisher_name: GroundCommandX80Pro2
         state_label: "x"
         covariance_label: "P"
         map_label: "m"

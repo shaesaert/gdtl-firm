@@ -88,6 +88,8 @@ vehicles :
         max_angular_velocity: 1.047 # pi/3 [rad/s]
         dt: 0.5
         process_noise_covariance : [[0.0001, 0, 0], [0, 0.0001, 0], [0, 0, 0.0001]]
+        ROS_control_send_rate: 2
+        ROS_control_publisher_name: GroundCommandX80Pro2
         state_label: "x"
         covariance_label: "P"
         map_label: "m"

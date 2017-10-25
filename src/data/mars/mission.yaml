@@ -1,10 +1,14 @@
 !!python/object:__main__.Mission
 name: "Mars mission."
 description: "Scenario presented as an example in the ? paper."
-specification: "F ( (A(x) > 0 && E_A(x, m) > 0) && F (A(x) > 0 && E_A(x, m) > 0)
-                    && F (B(x) > 0 && E_B(x, m) > 0) )
-                && ((Obs(x) < 1) U (Done(c) > 0))
-                )"
+#specification: "F ( (A(x) > 0 && E_A(x, m) > 0) && F (A(x) > 0 && E_A(x, m) > 0)
+#                    && F (B(x) > 0 && E_B(x, m) > 0) )
+#                && ((Obs(x) < 1) U (Done(c) > 0))
+#                )"
+specification: "F (A(x, m) > 0) && F (B(x, m) > 0)
+                && ((Obs(x) < 1) U (A(x, m) > 0))
+                && ((Obs(x) < 1) U (B(x, m) > 0))
+                "
 predicates: "/home/cristi/Dropbox/work/workspace_linux_desktop/gdtl-firm/src/data/mars/predicates.py"
 specification_type: "syntactically co-safe"
 environment :
@@ -78,6 +82,7 @@ environment :
   directed: False
 no_active_vehicles : 2
 vehicle_size : 0.2
+map_resolution: 0.2 # common parameter for all vehicles
 vehicles :
   Ground1 :
       initial_state: [0.5, 0.5, 0]

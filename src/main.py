@@ -60,7 +60,7 @@ class FIRM2DSetup(object):
         # read the start Pose
         x, y, yaw = self.robotModel['initial_state']
         cov = self.robotModel['initial_covariance']
-        self.start = SE2BeliefState(x, y, yaw, cov)
+        self.start = SE2BeliefState(x, y, yaw, cov, freeze=True)
         # read the specification
         self.spec  = mission.specification
         # read planning time
@@ -86,6 +86,9 @@ class FIRM2DSetup(object):
         data = dict()
         execfile(mission.predicates, data)
         predicates = data['predicates']
+        layer_priors = data['layer_priors']
+        collectables = data['collectables']
+        done = data['done']
         self.planner.obstacles = data['obstacles']
         del data
         assert predicates is not None, \
@@ -93,6 +96,10 @@ class FIRM2DSetup(object):
         self.planner.setSpecification(self.spec, state_label=state_label,
                                       cov_label=cov_label,
                                       predicates=predicates)
+        # initialize map
+        # FIXME: this is not good
+        self.planner.initMap(layer_priors, set(collectables),
+                             step=mission.map_resolution)
         # set initial state
         self.planner.addState(self.start, initial=True)
         # set sampler

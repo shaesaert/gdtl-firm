@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 license_text='''
-    Module implements GDTL-FIRM algorithm.
-    Copyright (C) 2016  Cristian Ioan Vasile <cvasile@bu.edu>
+    Module implements the GDTL-FIRM algorithm.
+    Copyright (C) 2016-2017  Cristian Ioan Vasile <cvasile@bu.edu>
     Hybrid and Networked Systems (HyNeSs) Group, BU Robotics Lab,
     Boston University
+    CSAIL, LIDS, Massachusetts Institute of Technology
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -84,39 +85,81 @@ class FStrategy(object):
         return
 
 class Map(object):
-    '''TODO:
+    '''Class represents a layered map of the environment. Each layer corresponds
+    to a type of feature that is tracked in the environment, e.g., rocks, sand,
+    shadow (explored area), samples of different types.
     '''
+    # TODO: optimize memory usage
+#     __slots__ = ('maps',)
+#     bounds = None
+#     step = -1
+#     collectables = ()
+
+    # TODO: Should collectables be a static attribute?
     
-    def __init__(self, bounds, step, reg_predicates):
-        ncols = int((bounds[1][0] - bounds[0][0])/step)
-        nrows = int((bounds[1][1] - bounds[0][1])/step)
+    def __init__(self, bounds, resolution, layer_priors, collectables,
+                 dtype=np.bool):
+        '''Constructor
 
-        self.maps = dict()
-        for label in reg_predicates:
-            self.maps[label] = np.zeros((nrows, ncols), dtype=np.bool)
+        Arguments
+        ---------
+
+        bounds: [[x_low, y_low], [x_high, y_high]]
+            The bounds of the environment.
+
+        resolution: float
+            The step size used to produce the grid, i.e., the resolution of the
+            layers.
+
+        layer_priors: dictionary
+            The map containing the priors used to define and initialize the
+            map's layers.
+
+        collectables: iterable
+            Iterable data structure, containing the labels of samples that can
+            be collected.
+        
+        dtype: numpy data type or dictionary (default: numpy.bool)
+            The numpy data type used for the map's layers.
+        
+        FIXME: The implementation assumes that dtype is np.bool.
+        '''
+#         # the set of collectable items must be a subset of the layers types
+#         assert set(collectables) <= set(layer_priors)
+        
+        self.step = float(resolution)
+
+        if not isinstance(dtype, dict):
+            dtype = {label:dtype for label in layer_priors}
+
+        self.layers = dict()
+        for label, prior in layer_priors.iteritems():
+            ncols = int((bounds[1][0] - bounds[0][0])/self.step)
+            nrows = int((bounds[1][1] - bounds[0][1])/self.step)
+            # use center of each cell in the grid to set their values
+            self.layers[label] = np.array(
+                                [[prior((px, py, 0)) for px in range(ncols)]
+                                    for py in range(nrows)], dtype=dtype[label])
+            assert self.layers[label].shape == (nrows, ncols)
         self.bounds = bounds
-        self.step = step
-
-        if self.maps:
-            for px in range(bounds[0][0]+step/2, bounds[0][1], step):
-                for py in range(bounds[0][0]+step/2, bounds[0][1], step):
-                    for label, pred in reg_predicates.iteritems():
-                        self.maps[label][px/step][py/step] = pred([px, py, 0])
+        self.collectables = collectables
 
     def check_bounds(self, x, y):
         '''Checks if the 2d point (x, y) is within the map's boundary.'''
-        return (x < self.bounds[0][0] or x > self.bounds[1][0]
-                or y < self.bounds[0][1] or y > self.bounds[1][1])
+        return (self.bounds[0][0] < x < self.bounds[1][0]
+                and self.bounds[0][1] < y < self.bounds[1][1])
 
-    def labels(self, state, label=None):
-        '''Returns all the labels that are set at the given state.'''
+    def value(self, state, label):
+        '''TODO: add description
+        '''
         x, y, _ = state
         assert self.check_bounds(x, y)
         px = (x - self.bounds[0][0])/self.step
         py = (y - self.bounds[0][1])/self.step
-        if label is None:
-            return set(label for label in self.maps if self.maps[label][px][py])
-        return self.maps[label][px][py]
+#         if label is None:
+#             return set(label for label in self.layers
+#                                             if self.layers[label][py][px])
+        return self.layers[label][px][py]
 
     def collect(self, state, labels):
         '''Collects samples of all given types.'''
@@ -126,27 +169,33 @@ class Map(object):
         '''Removes the sample of type label from the region containing the given
         state.
         '''
-        if label not in self.maps:
+        if label not in self.collectables:
             return False
         x, y, _ = state
         assert self.check_bounds(x, y)
         px = (x - self.bounds[0][0])/self.step
         py = (y - self.bounds[0][1])/self.step
-        if not self.maps[label][px][py]:
+        if not self.layers[label][py][px]:
             return False
         stack = deque([(px, py)])
         while stack:
             px, py = stack.pop()
-            self.maps[label][px][py] = False
+            self.layers[label][py][px] = False
             stack.append((px+dx, px+dy)
                             for dx in (-1, 0, 1) for dy in (-1, 0, 1)
-                                if self.maps[label][px+dx][py+dy])
+                                if self.layers[label][py+dy][px+dx]
+                                and self.check_bounds(px+dx, py+dy))
         return True
 
     def copy(self):
-        map_ = Map(self.bounds, self.step, dict())
-        for label, layer in self.maps:
-            map_.maps[label] = layer.copy()
+        '''Returns a (deep) copy of the layered map.
+        Note: The collectables attribute is not copied, instead a reference is
+        passed to the new object. 
+        '''
+        map_ = Map(self.bounds, self.step, dict(), ())
+        for label, layer in self.layers.iteritems():
+            map_.layers[label] = layer.copy()
+        map_.collectables = self.collectables
         return map_
 
 
@@ -188,10 +237,23 @@ class FIRM(object):
 
         self.cnt = it.count()
 
-    def initMap(self, predicates, step=0.2):
-        '''TODO: description
+    def initMap(self, layer_priors, collectables, step=0.2):
+        '''Sets the prior layered map.
+        
+        Parameters
+        ----------
+        layer_priors: dictionary of (string, function) pairs
+            Defines the layers of the map, where each layer is initialized based
+            on the associated prior.
+        
+        collectables: iterable
+            The collection of labels associated with items that can be collected
+            from the corresponding layers.
+        
+        step: double (default: 0.2)
+            The resolution of the discretization used by the map.
         '''
-        self.map = Map(self.bounds, step, predicates)
+        self.map = Map(self.bounds, step, layer_priors, collectables)
 
     def setSpecification(self, specification, state_label='x', cov_label='P',
                          map_label='m', collect_label='c', battery_label='ch',
@@ -250,31 +312,49 @@ class FIRM(object):
         self.map_label = map_label
         self.collect_label = collect_label
 
-    def getAPs(self, belief):
+    def getAPs(self, belief, maps, collected):
         '''Computes the set of atomic propositions that are true at the given
         belief node.
         '''
         # update predicate evaluation context with custom symbols
-        #FIXME: make this more extensible
-        attr_dict = {self.map_label: self.ts.node[belief][self.map_label],
-                self.collect_label: self.ts.node[belief][self.collect_label],
-            }
-        return set([ap for ap, pred in self.ap.iteritems()
+        attr_dict = {self.map_label: maps, self.collect_label: collected}
+        aps = set([ap for ap, pred in self.ap.iteritems()
                            if self.context.evalPred(pred,
                                        belief.conf, belief.cov,
                                        state_label=self.state_label,
                                        cov_label=self.covariance_label,
                                        attr_dict=attr_dict)])
+        # FIXME: I don't like this hack; perhaps it can be avoided
+        c = dict(collected)
+        for ap in aps:
+            c[self.ap[ap]] = c.get(self.ap[ap], 0) + 1
+        if self.done(c):
+            aps.add(self.done_ap)
 
-    def addState(self, state, maps, collected, initial=False, copy=True):
+        return aps
+#         return set([ap for ap, pred in self.ap.iteritems()
+#                            if self.context.evalPred(pred,
+#                                        belief.conf, belief.cov,
+#                                        state_label=self.state_label,
+#                                        cov_label=self.covariance_label)])
+
+    def addState(self, state, maps=None, collected=None, initial=False,
+                 copy=True):
         '''Adds a state to the transition system.
         Note: By default, a frozen copy of the state is added to the transition
-        system. 
+        system.
         '''
+        # if map is not given, then use the initial map and no collected samples
+        if maps is None:
+            assert collected is None
+            maps = self.map.copy()
+            collected = dict()
+        else:
+            assert collected is not None
         # construct node controller and update state
         controller = self.generateNodeController(state)
-        logging.debug('New belief node: %s, diag(cov): %s', state.conf,
-                                                            np.diag(state.cov))
+        logging.debug('New belief node: %s, diag(cov): %s, collected: %s',
+                      state.conf, np.diag(state.cov), collected)
         if copy:
             s = state.copy(freeze=True)
             maps_ = maps
@@ -285,6 +365,7 @@ class FIRM(object):
             # copy maps
             maps_ = maps.copy()
             collected_ = dict(collected)
+        assert s.frozen
         # compute set of atomic propositions
         props = self.getAPs(state)
         # collect samples at the state
@@ -313,10 +394,11 @@ class FIRM(object):
     def addTransition(self, a, b):
         '''Add a transition from state a to b in the transition system.'''
         controller = self.generateEdgeController(a, b)
-        nc = self.ts.g.node[b]['controller']
+        nc = self.ts.g.node[b]['controller'] # get node controller of b
         with Timer('compute trajectories for edge'):
             randomStartStates = [a.copy() for _ in xrange(self.numParticles)]
-            [r.setConf(mv_gauss(mean=a.conf, cov=a.cov)) for r in randomStartStates]
+            [r.setConf(mv_gauss(mean=a.conf, cov=a.cov))
+                                                     for r in randomStartStates]
              
             processTrajectories = [self.processTrajectory()
                                             for _ in xrange(self.numParticles)]
@@ -401,7 +483,7 @@ class FIRM(object):
 
     def initPA(self):
         '''Initialized the Product MDP.'''
-        assert len(self.ts.init) == 1
+        assert len(self.ts.init) == 1 # assumes only one starting state
         assert self.automaton is not None
 
         if not self.pa.init:
@@ -416,6 +498,8 @@ class FIRM(object):
         self.initSCCs()
 
     def trajectoryAnnotation(self, s_u, trajectory):
+        '''TODO: add description.
+        '''
         edge = np.zeros((len(self.automaton.final), 2), np.bool)
         s_v = s_u
         for _, props in trajectory:
@@ -669,7 +753,6 @@ class FIRM(object):
             transitions += [(xn, x) for x in near_states if self.canSteer(xn, x)]
 
             self.addState(xn, copy=False)
-
 
             for u, v in transitions:
                 t1 = time.time()

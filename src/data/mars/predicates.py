@@ -53,8 +53,9 @@ def sand(state):
 
 def shadow(state):
     '''Predicate defining the visible region of the map.'''
-    x, _, _ = state
-    return x > 2.8
+    x, y, _ = state
+#     return x > 2.8
+    return (x > 1.2 or y > 1.2)
 
 # def done(c):
 #     '''Predicate defining the end of the mission. It is used to convert DTL
@@ -70,7 +71,7 @@ predicates = {
 }
 
 # predicate defining obstacles; it is used to optimize sampling
-obstacles = rock 
+obstacles = rock
 
 # dictionary defining the layers of the map with associate priors 
 layer_priors = {

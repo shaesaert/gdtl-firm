@@ -6,8 +6,8 @@ description: "Scenario presented as an example in the ? paper."
 #                && ((Obs(x) < 1) U (Done(c) > 0))
 #                )"
 specification: "F (A(x, m) > 0) && F (B(x, m) > 0)
-                && ((Obs(x) < 1) U (A(x, m) > 0))
-                && ((Obs(x) < 1) U (B(x, m) > 0))
+                && ((Obs(x) < 1) U ((A(x, m) > 0) && (Obs(x) < 1)))
+                && ((Obs(x) < 1) U ((B(x, m) > 0) && (Obs(x) < 1)))
                 "
 predicates: "/home/cristi/Dropbox/work/workspace_linux_desktop/gdtl-firm/src/data/mars/predicates.py"
 specification_type: "syntactically co-safe"
@@ -71,11 +71,11 @@ environment :
       sides : [1.6, 0.2]
       show_dot: False
     Shadow:
-      position : [3.8, 1.8, 0]
+      position : [0.6, 0.6, 0]
       color : [0.6, 0.6, 0.6, 0.5]
-      label : Shadow
+      label : ''
       label_position : [0, 0]
-      sides : [2.0, 3.6]
+      sides : [1.2, 1.2]
       show_dot: False
   boundary : {limits: [[0, 0], [4.8, 3.6]], color: [0, 0, 0, 1]}
 #  background : 'path_to_image.png'
@@ -118,7 +118,7 @@ simulation:
   loop_figure: "simple_scenario_data.png"
 planning:
   seed: 2003
-  planning_steps: 30
+  planning_steps: 10
   planning_time: 1200
   sat_probability_threshold: 0.8
   solution_filename: 'transition_system_{}.txt'
@@ -126,7 +126,7 @@ planning:
     nearest_neighbors:
       max_number_of_neighbors: 6
       max_connection_radius: 1.0
-    steering_dist_bounds: [0.4, 0.99999]
+    steering_dist_bounds: [0.2, 0.99999]
     controller:
       control_queue_size: 10
       state_weight: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]

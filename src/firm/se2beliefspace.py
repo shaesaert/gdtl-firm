@@ -24,11 +24,11 @@ from numpy.linalg import norm
 
 class E2StateSampler(object):
     '''Class is used to generate random samples in E(2).'''
-    
+
     def __init__(self, bounds):
         self.low, high = np.array(bounds).reshape((2, 2))
         self.extend = high - self.low
-    
+
     def sample(self, freeze=True):
         x, y = self.low + np.random.rand(2) * self.extend
         return E2BeliefState(x, y, freeze=freeze)
@@ -36,11 +36,11 @@ class E2StateSampler(object):
 
 class SE2StateSampler(object):
     '''Class is used to generate random samples in SE(2).'''
-    
+
     def __init__(self, bounds):
         self.low, high = np.array(bounds).reshape((2, 2))
         self.extend = high - self.low
-    
+
     def sample(self, freeze=True):
 #         assert False #TODO: ????
         x, y = self.low + np.random.rand(2) * self.extend
@@ -51,41 +51,41 @@ class SE2StateSampler(object):
 class E2BeliefState(object):
     '''A belief in E(2): (x, y, covariance)'''
     __slots__ = ('conf', 'cov', 'frozen', '_hash')
-    
+
     reachDist = None
     normWeights = None
     meanNormWeight = None
     covNormWeight = None
-    
+
     def __init__(self, x=0, y=0, cov=None, freeze=False):
         self.conf = np.array([x, y], dtype=np.float)
         if cov is None:
             self.cov = np.zeros((2, 2))
         else:
             self.cov = np.array(cov)
-        
+
         if freeze:
             self._hash = hash((tuple(self.conf), tuple(self.cov.flatten())))
         self.frozen = freeze
-    
+
     def getConf(self):
 #         return np.array(self.conf)
         return self.conf
-    
+
     def setConf(self, conf):
         if self.frozen:
             raise TypeError('Can not modify frozen object!')
         self.conf[:] = conf
-    
+
     def freeze(self):
         if not self.frozen:
             self.frozen = True
             self._hash = hash((tuple(self.conf), tuple(self.cov.flatten())))
-    
+
     def thaw(self):
         self.frozen = False
         del self._hash
-    
+
     @property
     def x(self):
         return self.conf[0]
@@ -102,95 +102,97 @@ class E2BeliefState(object):
         if self.frozen:
             raise TypeError('Can not modify frozen object!')
         self.conf[1] = value
-    
+
     def isReached(self, state):
         '''Checks if the input state has stabilized to this state (node
         reachability check).
         '''
         # subtract the two beliefs and get the norm
         stateDiff = self.conf - state.conf
-        
+
         covDiff = state.cov - self.cov
         covDiffDiag = np.sqrt(np.maximum(np.diag(covDiff), 0))
-        
+
         # Need weighted supNorm of difference in means
         meanNorm = norm(stateDiff * E2BeliefState.normWeights, ord=np.inf)
         covDiagNorm = norm(covDiffDiag * E2BeliefState.normWeights, ord=np.inf)
         norm2 = max(meanNorm * E2BeliefState.meanNormWeight,
                     covDiagNorm * E2BeliefState.covNormWeight)
         return norm2 <= E2BeliefState.reachDist
-    
+
     def distanceTo(self, state):
         return norm(self.conf[:2] - state.conf[:2], ord=2)
-    
+
     def copy(self, freeze=False):
         return E2BeliefState(self.x, self.y, self.cov, freeze=freeze)
-    
+
     def setState(self, state):
         if self.frozen:
             raise TypeError('Can not modify frozen object!')
         self.conf[:] = state.x, state.y
         self.cov[:, :] = state.cov
-    
+
     def __eq__(self ,other):
         return np.all(self.conf == other.conf) and np.all(self.cov == other.cov)
-    
+
     def __neq__(self, other):
         return not self.__eq__(other)
-    
+
     def __hash__(self):
         assert self.frozen
         return self._hash
-    
+
     def __str__(self):
         return 'State [X, Y]: [{0}, {1}]\nCovariance:\n{2}'.format(
                                             self.x, self.y, self.cov)
+
+    __repr__ = __str__
 
 
 class SE2BeliefState(object):
     '''A belief in SE(2): (x, y, yaw, covariance)'''
     __slots__ = ('conf', 'cov', 'frozen', '_hash')
-    
+
     reachDist = None
     normWeights = None
     meanNormWeight = None
     covNormWeight = None
-    
+
     def __init__(self, x=0, y=0, yaw=0, cov=None, freeze=False):
         self.conf = np.array([x, y, self.normalizeAngle(yaw)], dtype=np.float)
         if cov is None:
             self.cov = np.zeros((3,3))
         else:
             self.cov = np.array(cov)
-        
+
         if freeze:
             self._hash = hash((tuple(self.conf), tuple(self.cov.flatten())))
         self.frozen = freeze
-    
+
     @classmethod
     def normalizeAngle(cls, theta):
         '''Normalizes angle to between -pi and pi'''
         return theta - (np.ceil((theta + pi)/(2*pi)) - 1) * 2 * pi
-    
+
     def getConf(self):
 #         return np.array(self.conf)
         return self.conf
-    
+
     def setConf(self, conf):
         if self.frozen:
             raise TypeError('Can not modify frozen object!')
         self.conf[:] = conf
         self.conf[2] = self.normalizeAngle(self.conf[2])
-    
+
     def freeze(self):
         if not self.frozen:
             self.frozen = True
             self._hash = hash((tuple(self.conf), tuple(self.cov.flatten())))
-    
+
     def thaw(self):
         self.frozen = False
         del self._hash
-    
+
     @property
     def x(self):
         return self.conf[0]
@@ -215,7 +217,7 @@ class SE2BeliefState(object):
         if self.frozen:
             raise TypeError('Can not modify frozen object!')
         self.conf[2] = self.normalizeAngle(value)
-    
+
     def isReached(self, state):
         '''Checks if the input state has stabilized to this state (node
         reachability check).
@@ -238,29 +240,31 @@ class SE2BeliefState(object):
 #         print '[isReached]', norm2, SE2BeliefState.reachDist, norm2 <= SE2BeliefState.reachDist
         
         return norm2 <= SE2BeliefState.reachDist
-    
+
     def distanceTo(self, state):
         return norm(self.conf[:2] - state.conf[:2], ord=2)
-    
+
     def copy(self, freeze=False):
         return SE2BeliefState(self.x, self.y, self.yaw, self.cov, freeze=freeze)
-    
+
     def setState(self, state):
         if self.frozen:
             raise TypeError('Can not modify frozen object!')
         self.conf[:] = state.x, state.y, state.yaw
         self.cov[:, :] = state.cov
-    
+
     def __eq__(self ,other):
         return np.all(self.conf == other.conf) and np.all(self.cov == other.cov)
     
     def __neq__(self, other):
         return not self.__eq__(other)
-    
+
     def __hash__(self):
         assert self.frozen
         return self._hash
-    
+
     def __str__(self):
         return 'State [X, Y, Yaw]: [{0}, {1}, {2}]\nCovariance:\n{3}'.format(
                                             self.x, self.y, self.yaw, self.cov)
+
+    __repr__ = __str__

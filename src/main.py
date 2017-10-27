@@ -24,11 +24,30 @@ import argparse
 import os
 
 import numpy as np
+from numpy import pi
+
 
 from firm import SE2BeliefState, SE2StateSampler, \
                  UnicycleMotionModel, \
                  CameraLocalization, \
                  FIRM, Mission
+
+
+class SE2ShadowStateSampler(object):
+    '''Class is used to generate random samples in SE(2).'''
+
+    def __init__(self, bounds, maps):
+        self.low, high = np.array(bounds).reshape((2, 2))
+        self.extend = high - self.low
+        self.map = maps
+
+    def sample(self, freeze=True):
+#         assert False #TODO: ????
+        while True:
+            x, y = self.low + np.random.rand(2) * self.extend
+            theta = -pi + np.random.rand(1) * 2 *pi
+            if not self.map.value((x, y, theta), 'shadow'):
+                return SE2BeliefState(x, y, theta, freeze=freeze)
 
 
 class FIRM2DSetup(object):
@@ -88,7 +107,6 @@ class FIRM2DSetup(object):
         predicates = data['predicates']
         layer_priors = data['layer_priors']
         collectables = data['collectables']
-        done = data['done']
         self.planner.obstacles = data['obstacles']
         del data
         assert predicates is not None, \
@@ -97,14 +115,16 @@ class FIRM2DSetup(object):
                                       cov_label=cov_label,
                                       predicates=predicates)
         # initialize map
-        # FIXME: this is not good
         self.planner.initMap(layer_priors, set(collectables),
                              step=mission.map_resolution)
         # set initial state
         self.planner.addState(self.start, initial=True)
         # set sampler
-        self.planner.sampler = SE2StateSampler(self.planner.bounds
-                + np.array([[0.2, 0.2], [-0.2, -0.2]])) #TODO: make this general
+        self.planner.sampler = SE2ShadowStateSampler(self.planner.bounds
+                + np.array([[0.2, 0.2], [-0.2, -0.2]]),
+                maps = self.planner.map) #TODO: make this general
+#         self.planner.sampler = SE2StateSampler(self.planner.bounds
+#                 + np.array([[0.2, 0.2], [-0.2, -0.2]])) #TODO: make this general
 
         self.isSetup = True
 
@@ -203,9 +223,37 @@ def plan():
     # 3. execute planners for the rover and copter
     fname = os.path.join(args.output_dir,
                         mission.planning.get('solution_filename', 'sol_{}.txt'))
-    my_setup.run(fname)
 
-    mission.visualize(my_setup.planner.ts, plot='plot')
+    # HACK: reveal regions of the map
+    explore = [
+        ((0.0, 0.0), (2.8, 1.2)),
+        ((0.0, 0.0), (2.8, 3.6)),
+        ((0.0, 0.0), (3.8, 3.6)),
+        ((0.0, 0.0), (4.8, 3.6)),
+    ]
+    for (x_low, y_low), (x_high, y_high) in explore:
+        logging.info('rover planning ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        print np.asarray(my_setup.planner.map.layers['shadow'], dtype=int)
+        print (x_low, y_low), (x_high, y_high)
+
+        my_setup.run(fname)
+        mission.visualize(my_setup.planner.ts, plot='plot')
+
+        if my_setup.planner.found:
+            break
+
+        logging.info('Explore>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        step = my_setup.planner.map.step
+
+        for x in range(int(x_low/step), int((x_high-x_low)/step)):
+            for y in range(int(y_low/step), int((y_high-y_low)/step)):
+                my_setup.planner.map.layers['shadow'][y][x] = False
+
+        # HACK: setting the shadow for visualization
+        xl, yl = x_high-x_low, y_high-y_low
+        mission.environment['regions']['Shadow']['position'] = \
+                                                    [x_low+xl/2, y_low+yl/2, 0]
+        mission.environment['regions']['Shadow']['sides'] = [xl, yl]
 
 if __name__ == '__main__':
     plan()

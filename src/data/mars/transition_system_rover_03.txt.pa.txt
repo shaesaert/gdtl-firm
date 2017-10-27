@@ -91,6 +91,42 @@ pa:
     sat: !!python/tuple [0.0, 1.0]
 - !!python/tuple
   - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S1
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S1
+  - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S1
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S1
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
     - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
     - trap
   - !!python/tuple
@@ -112,7 +148,25 @@ pa:
     - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
     - trap
   - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - trap
+  - !!python/tuple
     - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - trap
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
     - trap
   - prob: 1.0
     sat: !!python/tuple [0.0, 1.0]
@@ -382,7 +436,25 @@ pa:
     - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
     - trap
   - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - trap
+  - !!python/tuple
     - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - trap
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
     - trap
   - prob: 1.0
     sat: !!python/tuple [0.0, 1.0]
@@ -422,6 +494,42 @@ pa:
     - T0_S1
   - prob: 1.0
     sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - trap
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - trap
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - trap
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - trap
+  - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
 - !!python/tuple
   - !!python/tuple
     - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
@@ -442,6 +550,24 @@ pa:
     sat: !!python/tuple [0.0, 1.0]
 - !!python/tuple
   - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - trap
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - trap
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
     - !!python/tuple [0.39460390329521966, 1.1589592401518682, 0.08843955652474156]
     - T0_S1
   - !!python/tuple
@@ -563,6 +689,15 @@ pa:
     - T0_init
   - !!python/tuple
     - !!python/tuple [0.39460390329521966, 1.1589592401518682, 0.08843955652474156]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
     - T0_init
   - prob: 1.0
     sat: !!python/tuple [0.0, 0.0]
@@ -572,6 +707,15 @@ pa:
     - T0_init
   - !!python/tuple
     - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
     - T0_S1
   - prob: 1.0
     sat: !!python/tuple [0.0, 0.0]
@@ -728,6 +872,24 @@ pa:
     - accept_all
   - prob: 1.0
     sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - T0_S2
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - T0_S2
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S2
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
 - !!python/tuple
   - !!python/tuple
     - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
@@ -953,6 +1115,42 @@ pa:
     - trap
   - prob: 1.0
     sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
 - !!python/tuple
   - !!python/tuple
     - !!python/tuple [2.8349723369379265, 0.534710785001403, -1.1194529382542608]
@@ -1030,6 +1228,24 @@ pa:
     - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
     - accept_all
   - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - accept_all
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - accept_all
+  - !!python/tuple
     - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
     - accept_all
   - prob: 1.0
@@ -1111,6 +1327,15 @@ pa:
     - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
     - accept_all
   - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - accept_all
+  - !!python/tuple
     - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
     - accept_all
   - prob: 1.0
@@ -1121,6 +1346,15 @@ pa:
     - accept_all
   - !!python/tuple
     - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - accept_all
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
     - accept_all
   - prob: 1.0
     sat: !!python/tuple [1.0, 0.0]
@@ -1286,6 +1520,42 @@ pa:
     - trap
   - prob: 1.0
     sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - T0_S1
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - T0_S1
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - T0_S1
+  - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - T0_S1
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
 - !!python/tuple
   - !!python/tuple
     - !!python/tuple [1.115231103418283, 0.38662306408546665, -0.5189573290978409]
@@ -1405,6 +1675,42 @@ pa:
     sat: !!python/tuple [0.0, 0.0]
 - !!python/tuple
   - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - accept_all
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - accept_all
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - accept_all
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - accept_all
+  - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
     - !!python/tuple [0.5, 0.5, 0.0]
     - T0_S1
   - !!python/tuple
@@ -1453,6 +1759,15 @@ pa:
     - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
     - accept_all
   - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - accept_all
+  - !!python/tuple
     - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
     - accept_all
   - prob: 1.0
@@ -1470,6 +1785,51 @@ pa:
   - !!python/tuple
     - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
     - accept_all
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - accept_all
+  - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S2
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S2
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - T0_S2
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S2
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - T0_S2
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S2
   - !!python/tuple
     - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
     - accept_all
@@ -1489,7 +1849,25 @@ pa:
     - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
     - T0_S1
   - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - T0_S1
+  - !!python/tuple
     - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - T0_S1
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
     - T0_S1
   - prob: 1.0
     sat: !!python/tuple [0.0, 0.0]
@@ -1511,6 +1889,42 @@ pa:
     - T0_S2
   - prob: 1.0
     sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - trap
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - trap
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - trap
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - trap
+  - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - trap
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 1.0]
 - !!python/tuple
   - !!python/tuple
     - !!python/tuple [0.39460390329521966, 1.1589592401518682, 0.08843955652474156]
@@ -1561,7 +1975,25 @@ pa:
     - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
     - T0_S1
   - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - T0_S1
+  - !!python/tuple
     - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - T0_S1
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
     - T0_S1
   - prob: 1.0
     sat: !!python/tuple [0.0, 0.0]
@@ -1669,6 +2101,24 @@ pa:
     - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
     - T0_S1
   - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - T0_S1
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - T0_S1
+  - !!python/tuple
     - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
     - T0_S1
   - prob: 1.0
@@ -1718,6 +2168,24 @@ pa:
     - accept_all
   - prob: 1.0
     sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - T0_S2
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - T0_S2
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_S2
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
 - !!python/tuple
   - !!python/tuple
     - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
@@ -1837,6 +2305,42 @@ pa:
     sat: !!python/tuple [0.0, 0.0]
 - !!python/tuple
   - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - accept_all
+  - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - accept_all
+  - !!python/tuple
+    - !!python/tuple [0.3271533028484279, 2.11258286375201, 1.0457504883484408]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - accept_all
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
+    - accept_all
+  - !!python/tuple
+    - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - accept_all
+  - prob: 1.0
+    sat: !!python/tuple [1.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
     - !!python/tuple [0.39460390329521966, 1.1589592401518682, 0.08843955652474156]
     - accept_all
   - !!python/tuple
@@ -1930,7 +2434,25 @@ pa:
     - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
     - T0_init
   - !!python/tuple
+    - !!python/tuple [0.20505263376839503, 2.5030210236294637, -0.33318546924472026]
+    - T0_init
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - T0_init
+  - !!python/tuple
     - !!python/tuple [0.5134108613371173, 3.094131132897, 0.15668563889341813]
+    - T0_S1
+  - prob: 1.0
+    sat: !!python/tuple [0.0, 0.0]
+- !!python/tuple
+  - !!python/tuple
+    - !!python/tuple [0.8658306654114445, 2.4673604092658983, 1.952200150052704]
+    - T0_init
+  - !!python/tuple
+    - !!python/tuple [0.30100374500413063, 3.0484926479049226, 1.9019179986343557]
     - T0_S1
   - prob: 1.0
     sat: !!python/tuple [0.0, 0.0]

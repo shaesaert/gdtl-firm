@@ -89,13 +89,6 @@ class Map(object):
     to a type of feature that is tracked in the environment, e.g., rocks, sand,
     shadow (explored area), samples of different types.
     '''
-    # TODO: optimize memory usage
-#     __slots__ = ('maps',)
-#     bounds = None
-#     step = -1
-#     collectables = ()
-
-    # TODO: Should collectables be a static attribute?
     
     def __init__(self, bounds, resolution, layer_priors, collectables,
                  dtype=np.bool):
@@ -132,14 +125,18 @@ class Map(object):
         if not isinstance(dtype, dict):
             dtype = {label:dtype for label in layer_priors}
 
+        (x_low, y_low), (x_high, y_high) = bounds
+
         self.layers = dict()
         for label, prior in layer_priors.iteritems():
-            ncols = int((bounds[1][0] - bounds[0][0])/self.step)
-            nrows = int((bounds[1][1] - bounds[0][1])/self.step)
+            ncols = int(np.ceil((x_high - x_low)/self.step))
+            nrows = int(np.ceil((y_high - y_low)/self.step))
+            
             # use center of each cell in the grid to set their values
-            self.layers[label] = np.array(
-                                [[prior((px, py, 0)) for px in range(ncols)]
-                                    for py in range(nrows)], dtype=dtype[label])
+            self.layers[label] = np.array([[prior((x, y, 0))
+                for x in np.arange(x_low + self.step/2, x_high, self.step)]
+                    for y in np.arange(y_low + self.step/2, y_high, self.step)],
+                                          dtype=dtype[label])
             assert self.layers[label].shape == (nrows, ncols)
         self.bounds = bounds
         self.collectables = collectables
@@ -156,36 +153,7 @@ class Map(object):
         assert self.check_bounds(x, y)
         px = (x - self.bounds[0][0])/self.step
         py = (y - self.bounds[0][1])/self.step
-#         if label is None:
-#             return set(label for label in self.layers
-#                                             if self.layers[label][py][px])
-        return self.layers[label][px][py]
-
-    def collect(self, state, labels):
-        '''Collects samples of all given types.'''
-        return set(lb for lb in labels if self.collect_label(state, lb))
-
-    def collect_label(self, state, label):
-        '''Removes the sample of type label from the region containing the given
-        state.
-        '''
-        if label not in self.collectables:
-            return False
-        x, y, _ = state
-        assert self.check_bounds(x, y)
-        px = (x - self.bounds[0][0])/self.step
-        py = (y - self.bounds[0][1])/self.step
-        if not self.layers[label][py][px]:
-            return False
-        stack = deque([(px, py)])
-        while stack:
-            px, py = stack.pop()
-            self.layers[label][py][px] = False
-            stack.append((px+dx, px+dy)
-                            for dx in (-1, 0, 1) for dy in (-1, 0, 1)
-                                if self.layers[label][py+dy][px+dx]
-                                and self.check_bounds(px+dx, py+dy))
-        return True
+        return self.layers[label][py][px]
 
     def copy(self):
         '''Returns a (deep) copy of the layered map.
@@ -256,8 +224,7 @@ class FIRM(object):
         self.map = Map(self.bounds, step, layer_priors, collectables)
 
     def setSpecification(self, specification, state_label='x', cov_label='P',
-                         map_label='m', collect_label='c', battery_label='ch',
-                         predicates=None):
+                         map_label='m', predicates=None):
         '''Performs several operations to setup the planner's specification. The
         specification given as a GDTL formula is augmented with the boundary
         condition. Afterwards, it is translated to LTL, and the bijection
@@ -295,6 +262,7 @@ class FIRM(object):
             self.automaton.add_trap_state()
             self.automaton.final = [(self.automaton.final, {'trap'})]
         logging.info('Automaton size: %s', self.automaton.size())
+        logging.info('Automaton: %s', self.automaton)
         # set predicate evaluation context
         low, high = self.bounds
         extend = high - low
@@ -310,73 +278,40 @@ class FIRM(object):
         self.state_label = state_label
         self.covariance_label = cov_label
         self.map_label = map_label
-        self.collect_label = collect_label
 
-    def getAPs(self, belief, maps, collected):
+    def getAPs(self, belief):
         '''Computes the set of atomic propositions that are true at the given
         belief node.
         '''
         # update predicate evaluation context with custom symbols
-        attr_dict = {self.map_label: maps, self.collect_label: collected}
-        aps = set([ap for ap, pred in self.ap.iteritems()
+        attr_dict = {self.map_label: self.map}
+        return set([ap for ap, pred in self.ap.iteritems()
                            if self.context.evalPred(pred,
                                        belief.conf, belief.cov,
                                        state_label=self.state_label,
                                        cov_label=self.covariance_label,
                                        attr_dict=attr_dict)])
-        # FIXME: I don't like this hack; perhaps it can be avoided
-        c = dict(collected)
-        for ap in aps:
-            c[self.ap[ap]] = c.get(self.ap[ap], 0) + 1
-        if self.done(c):
-            aps.add(self.done_ap)
 
-        return aps
-#         return set([ap for ap, pred in self.ap.iteritems()
-#                            if self.context.evalPred(pred,
-#                                        belief.conf, belief.cov,
-#                                        state_label=self.state_label,
-#                                        cov_label=self.covariance_label)])
-
-    def addState(self, state, maps=None, collected=None, initial=False,
-                 copy=True):
+    def addState(self, state, initial=False, copy=True):
         '''Adds a state to the transition system.
         Note: By default, a frozen copy of the state is added to the transition
         system.
         '''
-        # if map is not given, then use the initial map and no collected samples
-        if maps is None:
-            assert collected is None
-            maps = self.map.copy()
-            collected = dict()
-        else:
-            assert collected is not None
         # construct node controller and update state
         controller = self.generateNodeController(state)
-        logging.debug('New belief node: %s, diag(cov): %s, collected: %s',
-                      state.conf, np.diag(state.cov), collected)
+        logging.debug('New belief node: %s, diag(cov): %s',
+                      state.conf, np.diag(state.cov))
         if copy:
             s = state.copy(freeze=True)
-            maps_ = maps
-            collected_ = collected
         else:
             s = state
             s.freeze()
-            # copy maps
-            maps_ = maps.copy()
-            collected_ = dict(collected)
         assert s.frozen
         # compute set of atomic propositions
         props = self.getAPs(state)
-        # collect samples at the state
-        c = maps_.collect(state, props)
-        for lb in c:
-            collected_[lb] = collected_.get(lb, 0) + 1
         # add state to transition system
         self.ts.g.add_node(s, attr_dict = {'prop': props, 
-                              'controller': controller, 'id': self.cnt.next(),
-                              self.map_label: maps_,
-                              self.collect_label: collected_})
+                              'controller': controller, 'id': self.cnt.next()})
         if initial:
             self.ts.init[s] = 1
         # update the connection strategy
@@ -494,8 +429,9 @@ class FIRM(object):
             ts_init, automaton_init = next(self.pa.init.iterkeys())
         if not self.pa.automaton_states.has_key(ts_init):
             self.pa.automaton_states[ts_init] = set([automaton_init])
-        # initialize SCCs
-        self.initSCCs()
+        if not self.tl.isSynCoSafe():
+            # initialize SCCs
+            self.initSCCs()
 
     def trajectoryAnnotation(self, s_u, trajectory):
         '''TODO: add description.
@@ -570,10 +506,15 @@ class FIRM(object):
                 if (target, r_state) not in self.pa.g:
                     stack.extend([(target, r_state, nb)
                                     for nb in self.ts.g.neighbors_iter(target)])
+                if self.tl.isSynCoSafe(): # this works only works for FSAs
+                    if r_state in self.automaton.final[0][0]:
+                        self.found= True
             # add transitions to the PA
             self.pa.g.add_edges_from(transitions)
-            with Timer('update SCCs'):
-                self.updateSCCs(transitions)
+            
+            if not self.tl.isSynCoSafe():
+                with Timer('update SCCs'):
+                    self.updateSCCs(transitions)
 #             delta.extend(transitions)
 #         print 'post update:'
 #         for ts_state, r_state in self.pa.g.nodes_iter():
@@ -640,7 +581,7 @@ class FIRM(object):
         if False: #TODO: make this work for general case
             if any(self.pa.good_sccs):
                 self.found = True
-        else:
+        elif not self.tl.isSynCoSafe():
 #             g = False
 #             for u, v, d in self.pa.g.edges_iter(data=True):
 #                 assert len(d['sat']) == 1
@@ -650,7 +591,7 @@ class FIRM(object):
             if any(self.pa.good_transitions[0]):
                 self.found = True
         return self.found
-    
+
     def solveDP(self):
         '''Solve the DP end component reachability problem.'''
         def recursion(state, k, cost_to_go, optimal_actions):
@@ -703,21 +644,21 @@ class FIRM(object):
 
         # HACK: implemented a policy, not necessary max sat prob
         policy = {}
-        for _, v in self.pa.good_transitions[0]:
-            policy[v] = [v, 1]
-
-        stack = policy.keys()
-        while stack:
-            v = stack.pop()
-            assert v in policy
-
-            for u in self.pa.g.predecessors_iter(v):
-                if u in policy:
-                    if self.pa.g[u][v]['prob'] > policy[u][1]:
-                        policy[u] = [v, self.pa.g[u][v]['prob']]
-                else:
-                    stack.append(u)
-                    policy[u] = [v, self.pa.g[u][v]['prob']]
+#         for _, v in self.pa.good_transitions[0]:
+#             policy[v] = [v, 1]
+# 
+#         stack = policy.keys()
+#         while stack:
+#             v = stack.pop()
+#             assert v in policy
+# 
+#             for u in self.pa.g.predecessors_iter(v):
+#                 if u in policy:
+#                     if self.pa.g[u][v]['prob'] > policy[u][1]:
+#                         policy[u] = [v, self.pa.g[u][v]['prob']]
+#                 else:
+#                     stack.append(u)
+#                     policy[u] = [v, self.pa.g[u][v]['prob']]
 
         return Solution(path=policy, prob=1) #FIXME: Again a hack, prob is not 1
 

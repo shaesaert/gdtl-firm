@@ -24,30 +24,12 @@ import argparse
 import os
 
 import numpy as np
-from numpy import pi
 
-
-from firm import SE2BeliefState, SE2StateSampler, \
-                 UnicycleMotionModel, \
-                 CameraLocalization, \
-                 FIRM, Mission
-
-
-class SE2ShadowStateSampler(object):
-    '''Class is used to generate random samples in SE(2).'''
-
-    def __init__(self, bounds, maps):
-        self.low, high = np.array(bounds).reshape((2, 2))
-        self.extend = high - self.low
-        self.map = maps
-
-    def sample(self, freeze=True):
-#         assert False #TODO: ????
-        while True:
-            x, y = self.low + np.random.rand(2) * self.extend
-            theta = -pi + np.random.rand(1) * 2 *pi
-            if not self.map.value((x, y, theta), 'shadow'):
-                return SE2BeliefState(x, y, theta, freeze=freeze)
+# from firm import SE2BeliefState as BeliefState
+from firm.roverbeliefspace import RoverBeliefState as BeliefState
+# from firm import SE2StateSampler as StateSampler
+from firm.roverbeliefspace import SE2ShadowStateSampler as StateSampler
+from firm import UnicycleMotionModel, CameraLocalization, FIRM, Mission
 
 
 class FIRM2DSetup(object):
@@ -65,11 +47,11 @@ class FIRM2DSetup(object):
         
         # setting the mean and norm weights (used in reachability check)
         cc = mission.planning['setup']['controller']
-        SE2BeliefState.covNormWeight = cc['norm_covariance_weight']
-        SE2BeliefState.meanNormWeight = cc['norm_mean_weight']
-        SE2BeliefState.reachDist = cc['reach_dist']
+        BeliefState.covNormWeight = cc['norm_covariance_weight']
+        BeliefState.meanNormWeight = cc['norm_mean_weight']
+        BeliefState.reachDist = cc['reach_dist']
         # set the state component norm weights
-        SE2BeliefState.normWeights = np.array(cc['norm_state_weights'])
+        BeliefState.normWeights = np.array(cc['norm_state_weights'])
         
         # load environment
         self.env = mission.environment
@@ -79,7 +61,7 @@ class FIRM2DSetup(object):
         # read the start Pose
         x, y, yaw = self.robotModel['initial_state']
         cov = self.robotModel['initial_covariance']
-        self.start = SE2BeliefState(x, y, yaw, cov, freeze=True)
+        self.start = BeliefState(x, y, yaw, cov, freeze=True)
         # read the specification
         self.spec  = mission.specification
         # read planning time
@@ -120,9 +102,9 @@ class FIRM2DSetup(object):
         # set initial state
         self.planner.addState(self.start, initial=True)
         # set sampler
-        self.planner.sampler = SE2ShadowStateSampler(self.planner.bounds
-                + np.array([[0.2, 0.2], [-0.2, -0.2]]),
-                maps = self.planner.map) #TODO: make this general
+        self.planner.sampler = StateSampler(self.planner.bounds
+                            + np.array([[0.2, 0.2], [-0.2, -0.2]]),
+                            maps = self.planner.map) #TODO: make this general
 #         self.planner.sampler = SE2StateSampler(self.planner.bounds
 #                 + np.array([[0.2, 0.2], [-0.2, -0.2]])) #TODO: make this general
 

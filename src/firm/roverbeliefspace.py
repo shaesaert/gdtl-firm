@@ -22,8 +22,6 @@ import numpy as np
 from numpy import pi
 from numpy.linalg import norm
 
-from se2beliefspace import SE2BeliefState
-
 
 class SE2ShadowStateSampler(object):
     '''Class is used to generate random samples in SE(2).'''
@@ -39,14 +37,14 @@ class SE2ShadowStateSampler(object):
             x, y = self.low + np.random.rand(2) * self.extend
             theta = -pi + np.random.rand(1) * 2 *pi
             if not self.map.value((x, y, theta), 'shadow'):
-                return SE2BeliefState(x, y, theta, freeze=freeze)
+                return RoverBeliefState(x, y, theta, freeze=freeze)
 
 class Map(object):
     '''Class represents a layered map of the environment. Each layer corresponds
     to a type of feature that is tracked in the environment, e.g., rocks, sand,
     shadow (explored area), samples of different types.
     '''
-    
+
     def __init__(self, bounds, resolution, layer_priors, collectables,
                  dtype=np.bool):
         '''Constructor
@@ -98,6 +96,9 @@ class Map(object):
         self.bounds = bounds
         self.collectables = collectables
 
+        self._hash = hash(tuple((label, tuple(layer.flatten))
+                               for label, layer in self.map.layers.iter_iterms))
+
     def check_bounds(self, x, y):
         '''Checks if the 2d point (x, y) is within the map's boundary.'''
         return (self.bounds[0][0] < x < self.bounds[1][0]
@@ -123,6 +124,9 @@ class Map(object):
         map_.collectables = self.collectables
         return map_
 
+    def __hash__(self):
+        return self._hash
+
 
 class RoverBeliefState(object):
     '''A belief in SE(2) x Map: (x, y, yaw, covariance, map)'''
@@ -141,14 +145,13 @@ class RoverBeliefState(object):
             self.cov = np.array(cov)
         
         if map_ is None:
-            pass
+            self.map = None
         else:
             self.map = map_.copy()
 
         if freeze:
             self._hash = hash((tuple(self.conf), tuple(self.cov.flatten()),
-                tuple((label, tuple(layer.flatten))
-                    for label, layer in self.map.layers.iter_iterms)))
+                               self.map))
         self.frozen = freeze
 
     @classmethod
@@ -170,8 +173,7 @@ class RoverBeliefState(object):
         if not self.frozen:
             self.frozen = True
             self._hash = hash((tuple(self.conf), tuple(self.cov.flatten()),
-                          tuple((label, tuple(layer.flatten))
-                              for label, layer in self.map.layers.iter_iterms)))
+                               self.map))
 
     def thaw(self):
         self.frozen = False

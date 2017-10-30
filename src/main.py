@@ -27,6 +27,7 @@ import numpy as np
 
 # from firm import SE2BeliefState as BeliefState
 from firm.roverbeliefspace import RoverBeliefState as BeliefState
+from firm.roverbeliefspace import Map
 # from firm import SE2StateSampler as StateSampler
 from firm.roverbeliefspace import SE2ShadowStateSampler as StateSampler
 from firm import UnicycleMotionModel, CameraLocalization, FIRM, Mission
@@ -61,19 +62,12 @@ class FIRM2DSetup(object):
         # read the start Pose
         x, y, yaw = self.robotModel['initial_state']
         cov = self.robotModel['initial_covariance']
-        self.start = BeliefState(x, y, yaw, cov, freeze=True)
         # read the specification
         self.spec  = mission.specification
         # read planning time
         self.planningTime = mission.planning['planning_time']
         self.planningSteps = mission.planning['planning_steps']
         self.sat_prob_threshold = mission.planning['sat_probability_threshold']
-        
-        logging.info('Problem configuration is')
-        logging.info("Start Pose: %s", str(self.start))
-        logging.info("Specification: %s", self.spec)
-        logging.info("Planning Time: %f seconds", self.planningTime)
-        
         # create the observation model
         observationModel = CameraLocalization(self.robotModel, self.env)
         # create the motion model
@@ -97,16 +91,24 @@ class FIRM2DSetup(object):
                                       cov_label=cov_label,
                                       predicates=predicates)
         # initialize map
-        self.planner.initMap(layer_priors, set(collectables),
-                             step=mission.map_resolution)
+        self.prior_map = Map(self.planner.bounds, mission.map_resolution,
+                             layer_priors, frozenset(collectables))
+#         self.planner.initMap(layer_priors, frozenset(collectables),
+#                              step=mission.map_resolution)
         # set initial state
+        self.start = BeliefState(x, y, yaw, cov, self.prior_map, freeze=True)
         self.planner.addState(self.start, initial=True)
         # set sampler
         self.planner.sampler = StateSampler(self.planner.bounds
                             + np.array([[0.2, 0.2], [-0.2, -0.2]]),
-                            maps = self.planner.map) #TODO: make this general
+                            maps = self.prior_map) #TODO: make this general
 #         self.planner.sampler = SE2StateSampler(self.planner.bounds
 #                 + np.array([[0.2, 0.2], [-0.2, -0.2]])) #TODO: make this general
+
+        logging.info('Problem configuration is')
+        logging.info("Start Pose: %s", str(self.start))
+        logging.info("Specification: %s", self.spec)
+        logging.info("Planning Time: %f seconds", self.planningTime)
 
         self.isSetup = True
 
@@ -215,7 +217,7 @@ def plan():
     ]
     for (x_low, y_low), (x_high, y_high) in explore:
         logging.info('rover planning ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        print np.asarray(my_setup.planner.map.layers['shadow'], dtype=int)
+        print np.asarray(my_setup.prior_map.layers['shadow'], dtype=int)
         print (x_low, y_low), (x_high, y_high)
 
         my_setup.run(fname)
@@ -225,11 +227,11 @@ def plan():
             break
 
         logging.info('Explore>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        step = my_setup.planner.map.step
+        step = my_setup.prior_map.step
 
         for x in range(int(x_low/step), int((x_high-x_low)/step)):
             for y in range(int(y_low/step), int((y_high-y_low)/step)):
-                my_setup.planner.map.layers['shadow'][y][x] = False
+                my_setup.prior_map.layers['shadow'][y][x] = False
 
         # HACK: setting the shadow for visualization
         xl, yl = x_high-x_low, y_high-y_low

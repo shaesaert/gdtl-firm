@@ -31,13 +31,13 @@ class SE2ShadowStateSampler(object):
         self.extend = high - self.low
         self.map = maps
 
-    def sample(self, freeze=True):
-#         assert False #TODO: ????
+    def sample(self, freeze=False):
         while True:
             x, y = self.low + np.random.rand(2) * self.extend
             theta = -pi + np.random.rand(1) * 2 *pi
             if not self.map.value((x, y, theta), 'shadow'):
                 return RoverBeliefState(x, y, theta, freeze=freeze)
+
 
 class Map(object):
     '''Class represents a layered map of the environment. Each layer corresponds
@@ -96,8 +96,8 @@ class Map(object):
         self.bounds = bounds
         self.collectables = collectables
 
-        self._hash = hash(tuple((label, tuple(layer.flatten))
-                               for label, layer in self.map.layers.iter_iterms))
+        self._hash = hash(tuple((label, tuple(layer.flatten()))
+                               for label, layer in self.layers.iteritems()))
 
     def check_bounds(self, x, y):
         '''Checks if the 2d point (x, y) is within the map's boundary.'''

@@ -84,88 +84,6 @@ class FStrategy(object):
             return [self.states[idx] for idx in idxs if idx < len(self.states)]
         return
 
-class Map(object):
-    '''Class represents a layered map of the environment. Each layer corresponds
-    to a type of feature that is tracked in the environment, e.g., rocks, sand,
-    shadow (explored area), samples of different types.
-    '''
-    
-    def __init__(self, bounds, resolution, layer_priors, collectables,
-                 dtype=np.bool):
-        '''Constructor
-
-        Arguments
-        ---------
-
-        bounds: [[x_low, y_low], [x_high, y_high]]
-            The bounds of the environment.
-
-        resolution: float
-            The step size used to produce the grid, i.e., the resolution of the
-            layers.
-
-        layer_priors: dictionary
-            The map containing the priors used to define and initialize the
-            map's layers.
-
-        collectables: iterable
-            Iterable data structure, containing the labels of samples that can
-            be collected.
-        
-        dtype: numpy data type or dictionary (default: numpy.bool)
-            The numpy data type used for the map's layers.
-        
-        FIXME: The implementation assumes that dtype is np.bool.
-        '''
-#         # the set of collectable items must be a subset of the layers types
-#         assert set(collectables) <= set(layer_priors)
-        
-        self.step = float(resolution)
-
-        if not isinstance(dtype, dict):
-            dtype = {label:dtype for label in layer_priors}
-
-        (x_low, y_low), (x_high, y_high) = bounds
-
-        self.layers = dict()
-        for label, prior in layer_priors.iteritems():
-            ncols = int(np.ceil((x_high - x_low)/self.step))
-            nrows = int(np.ceil((y_high - y_low)/self.step))
-            
-            # use center of each cell in the grid to set their values
-            self.layers[label] = np.array([[prior((x, y, 0))
-                for x in np.arange(x_low + self.step/2, x_high, self.step)]
-                    for y in np.arange(y_low + self.step/2, y_high, self.step)],
-                                          dtype=dtype[label])
-            assert self.layers[label].shape == (nrows, ncols)
-        self.bounds = bounds
-        self.collectables = collectables
-
-    def check_bounds(self, x, y):
-        '''Checks if the 2d point (x, y) is within the map's boundary.'''
-        return (self.bounds[0][0] < x < self.bounds[1][0]
-                and self.bounds[0][1] < y < self.bounds[1][1])
-
-    def value(self, state, label):
-        '''TODO: add description
-        '''
-        x, y, _ = state
-        assert self.check_bounds(x, y)
-        px = int((x - self.bounds[0][0])/self.step)
-        py = int((y - self.bounds[0][1])/self.step)
-        return self.layers[label][py][px]
-
-    def copy(self):
-        '''Returns a (deep) copy of the layered map.
-        Note: The collectables attribute is not copied, instead a reference is
-        passed to the new object. 
-        '''
-        map_ = Map(self.bounds, self.step, dict(), ())
-        for label, layer in self.layers.iteritems():
-            map_.layers[label] = layer.copy()
-        map_.collectables = self.collectables
-        return map_
-
 
 class FIRM(object):
     '''Feedback Information RoadMap planner'''
@@ -204,24 +122,6 @@ class FIRM(object):
         assert np.all(np.linalg.eigvals(self.control_weight) > 0) # check pdef
 
         self.cnt = it.count()
-
-    def initMap(self, layer_priors, collectables, step=0.2):
-        '''Sets the prior layered map.
-        
-        Parameters
-        ----------
-        layer_priors: dictionary of (string, function) pairs
-            Defines the layers of the map, where each layer is initialized based
-            on the associated prior.
-        
-        collectables: iterable
-            The collection of labels associated with items that can be collected
-            from the corresponding layers.
-        
-        step: double (default: 0.2)
-            The resolution of the discretization used by the map.
-        '''
-        self.map = Map(self.bounds, step, layer_priors, collectables)
 
     def setSpecification(self, specification, state_label='x', cov_label='P',
                          map_label='m', predicates=None):
@@ -284,7 +184,7 @@ class FIRM(object):
         belief node.
         '''
         # update predicate evaluation context with custom symbols
-        attr_dict = {self.map_label: self.map}
+        attr_dict = {self.map_label: belief.map}
         return set([ap for ap, pred in self.ap.iteritems()
                            if self.context.evalPred(pred,
                                        belief.conf, belief.cov,
@@ -345,7 +245,9 @@ class FIRM(object):
                                             'trajectories': trajectories})
 
     def generateNodeController(self, state): #, nodeController):
-        '''Generates the node controller that stabilizes the robot at the node'''
+        '''Generates the node controller that stabilizes the robot's belief at
+        the node.
+        '''
         # construct a linear Kalman filter
         lkf = LinearizedKF(self.observation_model, self.motion_model)
         if self.observation_model.isStateObservable(state):
@@ -357,7 +259,9 @@ class FIRM(object):
         else:
             raise AssertionError('Assumes that all states are observable!')
         # set the covariance
+        state.thaw()
         state.cov = stationaryCovariance
+        state.freeze()
         # create the node controller: SLQR + LKF #TODO: test this
 #         lqr = OffAxisSLQRController(self.motion_model, self.observation_model,
 #                              state, self.state_weight, self.control_weight)
@@ -391,15 +295,14 @@ class FIRM(object):
 
     def steer(self, src, dest):
         '''Steers the system from the source state to the destination state.'''
+        new = src.copy()
         dist = src.distanceTo(dest)
+        s, d = src.conf, dest.conf
         if dist > self.steering_radius:
-            s, d = src.conf, dest.conf
-            r = s + (self.steering_radius/dist) * (d - s)
-            new = dest.copy()
-            new.conf[:] = r
-            new.freeze()
-            return new
-        return dest
+            d = s + (self.steering_radius/dist) * (d - s)
+        new.conf[:] = d
+        new.freeze()
+        return new
 
     def extend(self):
         '''Generate a state near one in the transition system.'''

@@ -108,8 +108,8 @@ class Map(object):
         '''
         x, y, _ = state
         assert self.check_bounds(x, y)
-        px = (x - self.bounds[0][0])/self.step
-        py = (y - self.bounds[0][1])/self.step
+        px = int((x - self.bounds[0][0])/self.step)
+        py = int((y - self.bounds[0][1])/self.step)
         return self.layers[label][py][px]
 
     def copy(self):

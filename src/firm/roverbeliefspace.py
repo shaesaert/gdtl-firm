@@ -150,7 +150,8 @@ class RoverBeliefState(object):
             self.map = map_.copy()
 
         if freeze:
-            self._hash = hash((tuple(self.conf), tuple(self.cov.flatten()),
+            self._hash = hash((tuple(self.conf),
+                               tuple(np.asarray(self.cov).flatten()),
                                hash(self.map)))
         self.frozen = freeze
 
@@ -172,7 +173,8 @@ class RoverBeliefState(object):
     def freeze(self):
         if not self.frozen:
             self.frozen = True
-            self._hash = hash((tuple(self.conf), tuple(self.cov.flatten()),
+            self._hash = hash((tuple(self.conf),
+                               tuple(np.asarray(self.cov).flatten()),
                                hash(self.map)))
 
     def thaw(self):

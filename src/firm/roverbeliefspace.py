@@ -151,7 +151,7 @@ class RoverBeliefState(object):
 
         if freeze:
             self._hash = hash((tuple(self.conf), tuple(self.cov.flatten()),
-                               self.map))
+                               hash(self.map)))
         self.frozen = freeze
 
     @classmethod
@@ -173,7 +173,7 @@ class RoverBeliefState(object):
         if not self.frozen:
             self.frozen = True
             self._hash = hash((tuple(self.conf), tuple(self.cov.flatten()),
-                               self.map))
+                               hash(self.map)))
 
     def thaw(self):
         self.frozen = False

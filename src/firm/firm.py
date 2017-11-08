@@ -540,30 +540,41 @@ class FIRM(object):
         
         return Solution(optimal_actions, prob=opt_cost_to_go)
     
-    def computePolicy(self):
+    def computePolicy(self, epsilon=1e-3):
         assert self.existsSatisfyingRun()
 
-        # TODO: solve lp here for optimal policy
+        g = self.pa.g
 
-        # HACK: implemented a policy, not necessary max sat prob
+        # Initialize value iteration
+        for _, node_data in g.nodes_iter(data=True):
+            node_data['value'] = 0. 
+
+        # Dynp function
+        def dynp(node_start, node_end):
+            return g[node_start][node_end]['prob'] * g.node[node_end]['value']
+
+        # Do policy/value iteration
+        changed = True
         policy = {}
-#         for _, v in self.pa.good_transitions[0]:
-#             policy[v] = [v, 1]
-# 
-#         stack = policy.keys()
-#         while stack:
-#             v = stack.pop()
-#             assert v in policy
-# 
-#             for u in self.pa.g.predecessors_iter(v):
-#                 if u in policy:
-#                     if self.pa.g[u][v]['prob'] > policy[u][1]:
-#                         policy[u] = [v, self.pa.g[u][v]['prob']]
-#                 else:
-#                     stack.append(u)
-#                     policy[u] = [v, self.pa.g[u][v]['prob']]
+        while changed:
+            changed = False
+            for node_start, node_data in g.nodes_iter(data=True):
+                if node_start[1] == 'accept_all':
+                    new_value = 1.
+                    new_target = node_start
+                else:
+                    new_target = max(g[node_start], key=lambda node_end: dynp(node_start, node_end))
+                    new_value = dynp(node_start, new_target)
 
-        return Solution(path=policy, prob=1) #FIXME: Again a hack, prob is not 1
+                if new_value > node_data['value'] + epsilon:
+                    changed = True
+                    node_data['value'] = new_value
+                    policy[node_start] = new_target
+
+        probs = [g.node[n]['value'] for n in self.pa.init.keys()]
+        prob = sum(probs)/len(probs)
+
+        return Solution(path=policy, prob=prob)
 
     def solve(self, steps=1, maxtime=300, epsilon=0.01): 
         '''Solves the motion planning problem.'''

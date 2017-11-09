@@ -37,6 +37,7 @@ from lomap import Timer
 from gdtl import gdtl2ltl, PredicateContext
 
 from linearsystem import LinearSystem
+from policy import Policy
 from controller import SwitchingController
 from controller import NullController
 # from controller import SLQRController, TrackingLQRController
@@ -545,36 +546,41 @@ class FIRM(object):
 
         g = self.pa.g
 
+        logging.info("Starting value iteration to find policy")
+
         # Initialize value iteration
         for _, node_data in g.nodes_iter(data=True):
             node_data['value'] = 0. 
 
         # Dynp function
-        def dynp(node_start, node_end):
-            return g[node_start][node_end]['prob'] * g.node[node_end]['value']
+        def dynp(node_start, action):
+            node_end_list = [node_end for node_end in g[node_start] if node_end[0] == action]
+            return sum(g[node_start][node_end]['prob'] * g.node[node_end]['value'] for node_end in node_end_list)
 
         # Do policy/value iteration
         changed = True
-        policy = {}
+        pa_policy = {}
         while changed:
             changed = False
             for node_start, node_data in g.nodes_iter(data=True):
                 if node_start[1] == 'accept_all':
+                    new_action = node_start[0]   # stay put
                     new_value = 1.
-                    new_target = node_start
                 else:
-                    new_target = max(g[node_start], key=lambda node_end: dynp(node_start, node_end))
-                    new_value = dynp(node_start, new_target)
+                    action_set = set(node_end[0] for node_end in g[node_start])
+                    new_action = max(action_set, key=lambda action: dynp(node_start, action))
+                    new_value = dynp(node_start, new_action)
 
                 if new_value > node_data['value'] + epsilon:
                     changed = True
                     node_data['value'] = new_value
-                    policy[node_start] = new_target
+                    pa_policy[node_start] = new_action
 
-        probs = [g.node[n]['value'] for n in self.pa.init.keys()]
-        prob = sum(probs)/len(probs)
+        pol = Policy(pa_policy, self)
 
-        return Solution(path=policy, prob=prob)
+        logging.info("Value iteration finished with solution p=%f" % pol.prob)
+
+        return pol
 
     def solve(self, steps=1, maxtime=300, epsilon=0.01): 
         '''Solves the motion planning problem.'''

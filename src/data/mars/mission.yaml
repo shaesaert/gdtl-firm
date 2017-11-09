@@ -9,7 +9,7 @@ specification: "F (A(x, m) > 0) && F (B(x, m) > 0)
                 && ((Obs(x) < 1) U ((A(x, m) > 0) && (Obs(x) < 1)))
                 && ((Obs(x) < 1) U ((B(x, m) > 0) && (Obs(x) < 1)))
                 "
-predicates: "/home/cristi/Dropbox/work/workspace_linux_desktop/gdtl-firm/src/data/mars/predicates.py"
+predicates: "data/mars/predicates.py"
 specification_type: "syntactically co-safe"
 environment :
   bases: {}

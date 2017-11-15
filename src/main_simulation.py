@@ -154,8 +154,6 @@ prob_cutoff = 0.5
 
 # TODO: attach abort_signal to callback
 
-rover_state = np.array([my_setup.start.x, my_setup.start.y, my_setup.start.yaw])
-
 while not goal_found:
 
     # Look for solution
@@ -163,7 +161,7 @@ while not goal_found:
                             maxtime=my_setup.planningTime,
                             epsilon=my_setup.sat_prob_threshold)
 
-    mission.visualize(my_setup.planner.ts, plot='plot')
+    # mission.visualize(my_setup.planner.ts, plot='plot')
 
     if my_setup.planner.found:
 
@@ -185,6 +183,7 @@ while not goal_found:
 
         while not abort_signal:
 
+            # select target
             target, sat_prob = policy.get_target(bstate)
 
             if sat_prob < prob_cutoff:
@@ -194,11 +193,10 @@ while not goal_found:
             # move towards target
             print "going to ", target.conf
 
-
             controller = my_setup.planner.generateNodeController(target)
             t = 0
 
-            # while node not reached
+            # move towards target
             while not target.isReached(bstate) and not abort_signal:
                 # Get control and noise
                 u = controller.feedbackController.generateFeedbackControl(state, t)
@@ -217,18 +215,21 @@ while not goal_found:
 
                 # APs
                 aps = my_setup.planner.getAPs(bstate)
+                print aps
                 policy.update_events(aps)
 
                 t += 1
 
-                print "reached ", bstate.conf
-                bstate = target   # must do this for policy to work
+            print "reached ", bstate.conf
+            print "spec state ", policy.spec_state
+            bstate = target   # must do this for policy to work
 
-                target, sat_prob = policy.get_target(bstate)
+            target, sat_prob = policy.get_target(bstate)
 
     elif abort_signal:
         # TODO: CLEAR PLANNER AND RESTART FROM SAME SPEC STATE
-        pass
+        print "received abort signal, aborting"
+        break
     else:
         # Explore new region
         if explore_counter > len(explore):

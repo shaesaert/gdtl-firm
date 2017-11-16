@@ -32,6 +32,7 @@ from firm.roverbeliefspace import Map
 from firm.roverbeliefspace import SE2ShadowStateSampler as StateSampler
 from firm import UnicycleMotionModel, CameraLocalization, FIRM, Mission
 
+import matplotlib.pyplot as plt
 
 class FIRM2DSetup(object):
     '''Class to set up a mission for a planar unicycle robot and a copter.'''
@@ -173,6 +174,9 @@ while not goal_found:
         # real state
         state = my_setup.start.copy()  # covariance should be disregarded
 
+        state_traj = np.zeros([0,3])
+        state_traj = np.vstack([state_traj, state.conf])
+
         # belief state
         bstate = my_setup.start.copy()
 
@@ -189,6 +193,7 @@ while not goal_found:
             if sat_prob < prob_cutoff:
                 # probability of satisfaction low: abort!
                 abort_signal = True
+                break
             
             # move towards target
             print "going to ", target.conf
@@ -205,6 +210,8 @@ while not goal_found:
                 # update real state
                 state = m_model.evolve(state, u, w)
 
+                state_traj = np.vstack([state_traj, state.conf])
+
                 # Get observation
                 z = o_model.getObservation(state)
 
@@ -215,16 +222,19 @@ while not goal_found:
 
                 # APs
                 aps = my_setup.planner.getAPs(bstate)
-                print aps
                 policy.update_events(aps)
 
                 t += 1
 
             print "reached ", bstate.conf
-            print "spec state ", policy.spec_state
+
             bstate = target   # must do this for policy to work
 
             target, sat_prob = policy.get_target(bstate)
+
+            if policy.spec_state in my_setup.planner.automaton.final[0][0]:
+                goal_found = True
+                break
 
     elif abort_signal:
         # TODO: CLEAR PLANNER AND RESTART FROM SAME SPEC STATE

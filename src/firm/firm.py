@@ -563,9 +563,11 @@ class FIRM(object):
         while changed:
             changed = False
             for node_start, node_data in g.nodes_iter(data=True):
-                if node_start[1] == 'accept_all':
+                if node_start[1] in self.automaton.final[0][0]:   # accept
                     new_action = node_start[0]   # stay put
                     new_value = 1.
+                elif node_start[1] in self.automaton.final[0][1]: # trap
+                    new_value = 0.
                 else:
                     action_set = set(node_end[0] for node_end in g[node_start])
                     new_action = max(action_set, key=lambda action: dynp(node_start, action))

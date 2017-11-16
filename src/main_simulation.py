@@ -147,26 +147,43 @@ explore = [
     ((0.0, 0.0), (3.8, 3.6)),
     ((0.0, 0.0), (4.8, 3.6)),
 ]
-explore_counter = 0
-goal_found = 0
-abort_signal = 0
 
-prob_cutoff = 0.5
+explore_counter = 0     # index of region to explore next
+goal_found = False      # boolean
+
+planning_counter = 1    # num of times to plan before exploring
+
+prob_cutoff = 0.5       # min acceptable probability of satisfaction
+
+nstep = 0               # 
+
+next_option = 'solve'   # 'solve', 'extend', 'replan', 'execute'
+
+state_traj = np.zeros([0,3])
 
 # TODO: attach abort_signal to callback
 
 while not goal_found:
 
-    # Look for solution
-    my_setup.planner.solve(steps=my_setup.planningSteps,
-                            maxtime=my_setup.planningTime,
-                            epsilon=my_setup.sat_prob_threshold)
+    if next_option == 'solve':
 
-    # mission.visualize(my_setup.planner.ts, plot='plot')
+        # Look for solution
+        print "extending ts.."
+        my_setup.planner.solve(steps=my_setup.planningSteps,
+                                maxtime=my_setup.planningTime,
+                                epsilon=my_setup.sat_prob_threshold)
+        planning_counter -= 1
+        mission.visualize(my_setup.planner.ts, plot='plot')
 
-    if my_setup.planner.found:
+        if my_setup.planner.found:
+            next_option = 'execute'
 
-        abort_signal = 0
+        elif planning_counter <= 0:
+            next_option = 'explore'
+            planning_counter = 1
+
+    if next_option == 'execute':
+        print "executing.."
 
         # Execute solution
         policy = my_setup.planner.computePolicy()
@@ -174,7 +191,6 @@ while not goal_found:
         # real state
         state = my_setup.start.copy()  # covariance should be disregarded
 
-        state_traj = np.zeros([0,3])
         state_traj = np.vstack([state_traj, state.conf])
 
         # belief state
@@ -185,24 +201,24 @@ while not goal_found:
 
         bstate.freeze()
 
-        while not abort_signal:
+        while next_option == 'execute':
 
             # select target
             target, sat_prob = policy.get_target(bstate)
 
             if sat_prob < prob_cutoff:
                 # probability of satisfaction low: abort!
-                abort_signal = True
+                next_option = 'replan'
                 break
             
             # move towards target
-            print "going to ", target.conf
+            print "at ", bstate.conf, ", going to ", target.conf
 
             controller = my_setup.planner.generateNodeController(target)
             t = 0
 
             # move towards target
-            while not target.isReached(bstate) and not abort_signal:
+            while not target.isReached(bstate) and next_option == 'execute':
                 # Get control and noise
                 u = controller.feedbackController.generateFeedbackControl(state, t)
                 w = m_model.generateNoise(state, u)
@@ -224,6 +240,12 @@ while not goal_found:
                 aps = my_setup.planner.getAPs(bstate)
                 policy.update_events(aps)
 
+                nstep += 1
+                # Manual triggering of replanning!
+                if nstep > 100:
+                    next_option = 'replan'
+                    nstep = 0
+
                 t += 1
 
             print "reached ", bstate.conf
@@ -236,16 +258,47 @@ while not goal_found:
                 goal_found = True
                 break
 
-    elif abort_signal:
-        # TODO: CLEAR PLANNER AND RESTART FROM SAME SPEC STATE
-        print "received abort signal, aborting"
-        break
-    else:
+    if next_option == 'replan':
+        # CLEAR PLANNER AND RESTART FROM SAME SPEC STATE
+        print "replanning..."
+        
+        # Set current initial condition
+        my_setup.robotModel['initial_state'] = bstate.conf
+
+        # Restart planner
+        my_setup.setup(mission)
+
+        # Set spec (HACK)
+        data = dict()
+        execfile(mission.predicates, data)
+        state_label = my_setup.robotModel['motion_model']['state_label']
+        cov_label = my_setup.robotModel['motion_model']['covariance_label']
+        predicates = data['predicates']
+
+        my_setup.spec = 'F (A(x, m) > 0) && ((Obs(x) < 1) U ((A(x, m) > 0) && (Obs(x) < 1)))'
+        my_setup.planner.setSpecification(my_setup.spec, state_label=state_label,
+                                           cov_label=cov_label,
+                                           predicates=predicates)
+
+        # Uncover map (again)
+        step = my_setup.prior_map.step
+        for i in range(explore_counter):
+            (x_low, y_low), (x_high, y_high) = explore[i]
+            for x in range(int(x_low/step), int((x_high-x_low)/step)):
+                for y in range(int(y_low/step), int((y_high-y_low)/step)):
+                    my_setup.prior_map.layers['shadow'][y][x] = False
+
+
+        planning_counter = 3
+        next_option = 'solve'
+
+    if next_option == 'explore':
         # Explore new region
         if explore_counter > len(explore):
             print "explored all regions without finding solution"
             break
 
+        print "exploring new region.."
         step = my_setup.prior_map.step
         (x_low, y_low), (x_high, y_high) = explore[explore_counter]
         for x in range(int(x_low/step), int((x_high-x_low)/step)):
@@ -257,3 +310,16 @@ while not goal_found:
         mission.environment['regions']['Shadow']['sides'] = [xl, yl]
 
         explore_counter += 1
+        next_option = 'solve'
+
+print "made it to goal.."
+
+figure = plt.figure()
+figure.add_subplot('111')
+axes = figure.axes[0]
+
+mission.draw_environment(axes, figure)
+mission.draw_ts(my_setup.planner.ts, axes, figure)
+axes.plot(state_traj[:,0], state_traj[:,1])
+
+plt.show()

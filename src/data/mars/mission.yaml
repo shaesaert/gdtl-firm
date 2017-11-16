@@ -117,7 +117,7 @@ simulation:
   figures: {filename_template: "simple_scenario_frame_{frame:03d}.png"}
   loop_figure: "simple_scenario_data.png"
 planning:
-  seed: 2003
+  seed: 2017
   planning_steps: 10
   planning_time: 1200
   sat_probability_threshold: 0.8
@@ -134,5 +134,5 @@ planning:
       norm_covariance_weight: 1.0
       norm_mean_weight: 2.0
       norm_state_weights: [0.4, 0.4, 0] #[0.5, 0.5]
-      reach_dist:  0.05
+      reach_dist:  0.1
     number_monte_carlo_trials: 15

@@ -134,5 +134,5 @@ planning:
       norm_covariance_weight: 1.0
       norm_mean_weight: 2.0
       norm_state_weights: [0.4, 0.4, 0] #[0.5, 0.5]
-      reach_dist:  0.1
+      reach_dist:  0.05
     number_monte_carlo_trials: 15

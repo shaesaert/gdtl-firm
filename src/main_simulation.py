@@ -34,6 +34,17 @@ from firm import UnicycleMotionModel, CameraLocalization, FIRM, Mission
 
 import matplotlib.pyplot as plt
 
+# Imports for Gazebo Visualizer
+import math
+import rospy
+import tf.transformations as tfm
+import actionlib
+from best_msgs.msg import *
+from geometry_msgs.msg import Pose
+from actionlib_msgs.msg import GoalStatus
+
+
+
 class FIRM2DSetup(object):
     '''Class to set up a mission for a planar unicycle robot and a copter.'''
     
@@ -113,6 +124,76 @@ class FIRM2DSetup(object):
 
         self.isSetup = True
 
+class NavigatorClient(object):
+    def rad2deg(self, rad):
+        return rad / math.pi * 180.0
+
+    def deg2rad(self, deg):
+        return deg/ 180.0 * math.pi
+
+    def posemsg2xyh(self, pose):
+        """Convert geometry_msgs.Pose to (x, y, heading)"""
+        quat = (pose.orientation.x,
+                pose.orientation.y,
+                pose.orientation.z,
+                pose.orientation.w)
+        rpy = tfm.euler_from_quaternion(quat)
+        xyh = (pose.position.x,
+            pose.position.y,
+            rpy[2])
+        return xyh
+
+    def xyh2posemsg(self, xyh):
+        """Convert (x, y, heading) to geometry_msgs.Pose"""
+        pose = Pose()
+        pose.position.x = xyh[0]
+        pose.position.y = xyh[1]
+        pose.position.z = 0
+        pose.orientation.x = 0
+        pose.orientation.y = 0
+        pose.orientation.z = math.sin(xyh[2] / 2.0)
+        pose.orientation.w = math.cos(xyh[2] / 2.0)
+        return pose
+
+    def feedback_cb(self, feedback):
+        """Print current pose in feedback message"""
+        rospy.loginfo('xyh={}'.format(self.posemsg2xyh(feedback.pose.pose)))
+
+    def send_goal(self, xyh):
+        """Set goal to (x, y, heading)"""
+        # Compose goal message
+        goal = NavigationGoal()
+        goal.target_pose.header.stamp = rospy.Time.now()
+        goal.target_pose.header.frame_id = 'MAP'
+        goal.target_pose.pose = self.xyh2posemsg(xyh)
+
+        # Create action client
+        client = actionlib.SimpleActionClient('navigator', NavigationAction)
+
+        rospy.loginfo("Waiting for action server to start")
+        client.wait_for_server()
+
+        # Send goal command
+        rospy.loginfo("Sending goal: {}".format(xyh))
+        client.send_goal(goal, feedback_cb=self.feedback_cb)
+
+        rospy.loginfo("Waiting for action server response")
+        client.wait_for_result()
+
+        # Receive result
+        status = client.get_state()
+        rospy.loginfo("Action execution finished at status={}"
+                    "".format(GoalStatus.to_string(status)))
+
+        result = client.get_result()
+        rospy.loginfo("Pose after execution: {}"
+                    "".format(self.posemsg2xyh(result.pose.pose)))
+        return result
+
+# configure visualizer
+visualize = True
+rospy.init_node('test_nav', anonymous=True)
+nav = NavigatorClient()
 
 # configure logging
 fs, dfs = '%(asctime)s %(levelname)s %(message)s', '%m/%d/%Y %I:%M:%S %p'
@@ -235,7 +316,8 @@ while not goal_found:
                 currentLS = controller.feedbackController.getCurrentLS(t)
                 nextLS = controller.feedbackController.getNextLS(t)
                 bstate = controller.filter.evolve(bstate, u, z, currentLS, nextLS)
-
+                if visualize:
+                    result = nav.send_goal(bstate.getConf())
                 # APs
                 aps = my_setup.planner.getAPs(bstate)
                 policy.update_events(aps)
@@ -287,7 +369,6 @@ while not goal_found:
             for x in range(int(x_low/step), int((x_high-x_low)/step)):
                 for y in range(int(y_low/step), int((y_high-y_low)/step)):
                     my_setup.prior_map.layers['shadow'][y][x] = False
-
 
         planning_counter = 3
         next_option = 'solve'

@@ -192,7 +192,7 @@ class NavigatorClient(object):
 
 # configure visualizer
 visualize = True
-rospy.init_node('test_nav', anonymous=True)
+rospy.init_node('gdtl_firm', anonymous=True)
 nav = NavigatorClient()
 
 # configure logging
@@ -208,7 +208,7 @@ if True:
     root.addHandler(ch)
 
 # 1. load mission and environment
-mission = Mission.from_file('data/mars/mission.yaml')
+mission = Mission.from_file('data/mars2/mission.yaml')
 logging.info('\n' + str(mission))
 logging.info('Seed: %s', mission.planning.get('seed', None))
 
@@ -223,10 +223,9 @@ fname = os.path.join('data/mars',
 
 # HACK: reveal regions of the map
 explore = [
-    ((0.0, 0.0), (2.8, 1.2)),
-    ((0.0, 0.0), (2.8, 3.6)),
-    ((0.0, 0.0), (3.8, 3.6)),
-    ((0.0, 0.0), (4.8, 3.6)),
+    ((-15, -15), (0, 15)),
+    ((-15, -15), (5, 15)),
+    ((-15, -15), (15, 15)),
 ]
 
 explore_counter = 0     # index of region to explore next
@@ -291,7 +290,7 @@ while not goal_found:
                 # probability of satisfaction low: abort!
                 next_option = 'replan'
                 break
-            
+
             # move towards target
             print "at ", bstate.conf, ", going to ", target.conf
 
@@ -317,7 +316,9 @@ while not goal_found:
                 nextLS = controller.feedbackController.getNextLS(t)
                 bstate = controller.filter.evolve(bstate, u, z, currentLS, nextLS)
                 if visualize:
-                    result = nav.send_goal(bstate.getConf())
+                    pose = bstate.getConf()
+                    # pose[2] = pose[2]*3.14/180
+                    result = nav.send_goal(pose)
                 # APs
                 aps = my_setup.planner.getAPs(bstate)
                 policy.update_events(aps)
@@ -325,7 +326,7 @@ while not goal_found:
                 nstep += 1
                 # Manual triggering of replanning!
                 if nstep > 100:
-                    next_option = 'replan'
+                    # next_option = 'replan'
                     nstep = 0
 
                 t += 1
@@ -343,7 +344,7 @@ while not goal_found:
     if next_option == 'replan':
         # CLEAR PLANNER AND RESTART FROM SAME SPEC STATE
         print "replanning..."
-        
+
         # Set current initial condition
         my_setup.robotModel['initial_state'] = bstate.conf
 

@@ -192,6 +192,7 @@ class NavigatorClient(object):
 
 # configure visualizer
 visualize = True
+failedonce = False
 rospy.init_node('gdtl_firm', anonymous=True)
 nav = NavigatorClient()
 
@@ -223,7 +224,8 @@ fname = os.path.join('data/mars',
 
 # HACK: reveal regions of the map
 explore = [
-    ((-15, -15), (0, 15)),
+    ((-15, -15), (-5, 15)),
+    ((-15, 0), (5, 15)),
     ((-15, -15), (5, 15)),
     ((-15, -15), (15, 15)),
 ]
@@ -235,7 +237,7 @@ planning_counter = 1    # num of times to plan before exploring
 
 prob_cutoff = 0.5       # min acceptable probability of satisfaction
 
-nstep = 0               # 
+nstep = 0               #
 
 next_option = 'solve'   # 'solve', 'extend', 'replan', 'execute'
 
@@ -253,7 +255,15 @@ while not goal_found:
                                 maxtime=my_setup.planningTime,
                                 epsilon=my_setup.sat_prob_threshold)
         planning_counter -= 1
-        mission.visualize(my_setup.planner.ts, plot='plot')
+        # mission.visualize(my_setup.planner.ts, plot='plot')
+
+        figure = plt.figure()
+        figure.add_subplot('111')
+        axes = figure.axes[0]
+        mission.draw_environment(axes, figure)
+        mission.draw_ts(my_setup.planner.ts, axes, figure)
+        axes.plot(state_traj[:,0], state_traj[:,1])
+        plt.show()
 
         if my_setup.planner.found:
             next_option = 'execute'
@@ -302,6 +312,7 @@ while not goal_found:
                 # Get control and noise
                 u = controller.feedbackController.generateFeedbackControl(state, t)
                 w = m_model.generateNoise(state, u)
+                w[2] = w[2]/10
 
                 # update real state
                 state = m_model.evolve(state, u, w)
@@ -325,12 +336,20 @@ while not goal_found:
 
                 nstep += 1
                 # Manual triggering of replanning!
-                if nstep > 100:
-                    # next_option = 'replan'
-                    nstep = 0
-
+                # if nstep > 100:
+                if (state.conf[0] < -1.5 and state.conf[0] > -7.5) and (state.conf[1] < 9.5 and state.conf[1] > 2.5) and (not failedonce):
+                    figure = plt.figure()
+                    figure.add_subplot('111')
+                    axes = figure.axes[0]
+                    mission.draw_environment(axes, figure)
+                    mission.draw_ts(my_setup.planner.ts, axes, figure)
+                    axes.plot(state_traj[:,0], state_traj[:,1])
+                    plt.show()
+                    print bstate
+                    failedonce = True
+                    next_option = 'replan'
                 t += 1
-
+                print 
             print "reached ", bstate.conf
 
             bstate = target   # must do this for policy to work
@@ -344,31 +363,28 @@ while not goal_found:
     if next_option == 'replan':
         # CLEAR PLANNER AND RESTART FROM SAME SPEC STATE
         print "replanning..."
+        # 1. load mission and environment
+        mission = Mission.from_file('data/mars2/mission_later.yaml')
+        logging.info('\n' + str(mission))
+        logging.info('Seed: %s', mission.planning.get('seed', None))
 
-        # Set current initial condition
-        my_setup.robotModel['initial_state'] = bstate.conf
+        # 2. setup the systems, and planners
+        my_setup = FIRM2DSetup()
 
         # Restart planner
         my_setup.setup(mission)
 
-        # Set spec (HACK)
-        data = dict()
-        execfile(mission.predicates, data)
-        state_label = my_setup.robotModel['motion_model']['state_label']
-        cov_label = my_setup.robotModel['motion_model']['covariance_label']
-        predicates = data['predicates']
+        # Set current initial condition
+        my_setup.robotModel['initial_state'] = bstate.conf
 
-        my_setup.spec = 'F (A(x, m) > 0) && ((Obs(x) < 1) U ((A(x, m) > 0) && (Obs(x) < 1)))'
-        my_setup.planner.setSpecification(my_setup.spec, state_label=state_label,
-                                           cov_label=cov_label,
-                                           predicates=predicates)
-
+        map_lowx = my_setup.prior_map.bounds[0,0]
+        map_lowy = my_setup.prior_map.bounds[0,1]
         # Uncover map (again)
         step = my_setup.prior_map.step
         for i in range(explore_counter):
             (x_low, y_low), (x_high, y_high) = explore[i]
-            for x in range(int(x_low/step), int((x_high-x_low)/step)):
-                for y in range(int(y_low/step), int((y_high-y_low)/step)):
+            for x in range(int((x_low-map_lowx)/step), int((x_high-map_lowx)/step)):
+                for y in range(int((y_low-map_lowy)/step), int((y_high-map_lowy)/step)):
                     my_setup.prior_map.layers['shadow'][y][x] = False
 
         planning_counter = 3
@@ -376,22 +392,25 @@ while not goal_found:
 
     if next_option == 'explore':
         # Explore new region
-        if explore_counter > len(explore):
+        if explore_counter >= len(explore):
             print "explored all regions without finding solution"
-            break
+        else:
+            print "exploring new region.."
+            step = my_setup.prior_map.step
+            (x_low, y_low), (x_high, y_high) = explore[explore_counter]
+            print my_setup.prior_map.layers['shadow']
+            map_lowx = my_setup.prior_map.bounds[0,0]
+            map_lowy = my_setup.prior_map.bounds[0,1]
+            for x in range(int((x_low-map_lowx)/step), int((x_high-map_lowx)/step)):
+                for y in range(int((y_low-map_lowy)/step), int((y_high-map_lowy)/step)):
+                    my_setup.prior_map.layers['shadow'][y][x] = False
+            print my_setup.prior_map.layers['shadow']
+            xl, yl = x_high-x_low, y_high-y_low
+            mission.environment['regions']['Shadow']['position'] = \
+                                                        [x_low+xl/2, y_low+yl/2, 0]
+            mission.environment['regions']['Shadow']['sides'] = [xl, yl]
 
-        print "exploring new region.."
-        step = my_setup.prior_map.step
-        (x_low, y_low), (x_high, y_high) = explore[explore_counter]
-        for x in range(int(x_low/step), int((x_high-x_low)/step)):
-            for y in range(int(y_low/step), int((y_high-y_low)/step)):
-                my_setup.prior_map.layers['shadow'][y][x] = False
-        xl, yl = x_high-x_low, y_high-y_low
-        mission.environment['regions']['Shadow']['position'] = \
-                                                    [x_low+xl/2, y_low+yl/2, 0]
-        mission.environment['regions']['Shadow']['sides'] = [xl, yl]
-
-        explore_counter += 1
+            explore_counter += 1
         next_option = 'solve'
 
 print "made it to goal.."

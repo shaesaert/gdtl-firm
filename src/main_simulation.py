@@ -293,15 +293,9 @@ while not goal_found:
 
         bstate.freeze()
 
+        target, sat_prob = policy.get_target(bstate)
+
         while next_option == 'execute':
-
-            # select target
-            target, sat_prob = policy.get_target(bstate)
-
-            if sat_prob < prob_cutoff:
-                # probability of satisfaction low: abort!
-                next_option = 'replan'
-                break
 
             # move towards target
             print "at ", bstate.conf, ", going to ", target.conf
@@ -337,7 +331,6 @@ while not goal_found:
                 aps = my_setup.planner.getAPs(bstate)
                 policy.update_events(aps)
 
-                print bstate.conf[2]
                 nstep += 1
                 # Manual triggering of replanning!
                 # if nstep > 100:
@@ -355,9 +348,17 @@ while not goal_found:
                 t += 1
             print "reached ", bstate.conf
 
-            bstate = target   # must do this for policy to work
+            plt.plot(state_traj[:,2])
 
-            target, sat_prob = policy.get_target(bstate)
+            plt.show()
+
+            # Update target
+            target, sat_prob = policy.get_target(target)
+
+            # if sat_prob < prob_cutoff:
+                # probability of satisfaction low: abort!
+                # next_option = 'replan'
+                # break
 
             if policy.spec_state in my_setup.planner.automaton.final[0][0]:
                 goal_found = True

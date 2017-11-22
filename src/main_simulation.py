@@ -42,22 +42,23 @@ import actionlib
 from best_msgs.msg import *
 from geometry_msgs.msg import Pose
 from actionlib_msgs.msg import GoalStatus
+import time
 
 
 
 class FIRM2DSetup(object):
     '''Class to set up a mission for a planar unicycle robot and a copter.'''
-    
+
     def __init__(self, data=None):
         self.setup(data)
-    
+
     def setup(self, mission):
         if mission is None:
             self.isSetup = False
             return
-        
+
         np.random.seed(mission.planning.get('seed', None))
-        
+
         # setting the mean and norm weights (used in reachability check)
         cc = mission.planning['setup']['controller']
         BeliefState.covNormWeight = cc['norm_covariance_weight']
@@ -65,7 +66,7 @@ class FIRM2DSetup(object):
         BeliefState.reachDist = cc['reach_dist']
         # set the state component norm weights
         BeliefState.normWeights = np.array(cc['norm_state_weights'])
-        
+
         # load environment
         self.env = mission.environment
         # load robot model
@@ -191,17 +192,18 @@ class NavigatorClient(object):
         return result
 
 # configure visualizer
-visualize = True
+visualize = False
 failedonce = False
-rospy.init_node('gdtl_firm', anonymous=True)
-nav = NavigatorClient()
+if visualize:
+    rospy.init_node('gdtl_firm', anonymous=True)
+    nav = NavigatorClient()
 
 # configure logging
 fs, dfs = '%(asctime)s %(levelname)s %(message)s', '%m/%d/%Y %I:%M:%S %p'
 loglevel = logging.INFO #logging.DEBUG if args.debug else logging.INFO
 logging.basicConfig(filename='data/mars/mars.log', level=loglevel,
                     format=fs, datefmt=dfs)
-if True:
+if False:
     root = logging.getLogger()
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(loglevel)
@@ -330,10 +332,12 @@ while not goal_found:
                     pose = bstate.getConf()
                     # pose[2] = pose[2]*3.14/180
                     result = nav.send_goal(pose)
+                    time.sleep(0.1)
                 # APs
                 aps = my_setup.planner.getAPs(bstate)
                 policy.update_events(aps)
 
+                print bstate.conf[2]
                 nstep += 1
                 # Manual triggering of replanning!
                 # if nstep > 100:
@@ -349,7 +353,6 @@ while not goal_found:
                     failedonce = True
                     next_option = 'replan'
                 t += 1
-                print 
             print "reached ", bstate.conf
 
             bstate = target   # must do this for policy to work
@@ -398,13 +401,11 @@ while not goal_found:
             print "exploring new region.."
             step = my_setup.prior_map.step
             (x_low, y_low), (x_high, y_high) = explore[explore_counter]
-            print my_setup.prior_map.layers['shadow']
             map_lowx = my_setup.prior_map.bounds[0,0]
             map_lowy = my_setup.prior_map.bounds[0,1]
             for x in range(int((x_low-map_lowx)/step), int((x_high-map_lowx)/step)):
                 for y in range(int((y_low-map_lowy)/step), int((y_high-map_lowy)/step)):
                     my_setup.prior_map.layers['shadow'][y][x] = False
-            print my_setup.prior_map.layers['shadow']
             xl, yl = x_high-x_low, y_high-y_low
             mission.environment['regions']['Shadow']['position'] = \
                                                         [x_low+xl/2, y_low+yl/2, 0]

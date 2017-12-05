@@ -1,7 +1,7 @@
 license_text='''
     Module implements a simple example of translating a syntactically co-safe
     GDTL formula to a deterministic finite state automaton.
-    Copyright (C) 2017  Cristian Ioan Vasile <cvasile@bu.edu>
+    Copyright (C) 2017  Cristian Ioan Vasile <cvasile@mit.edu>
     CSAIL, LIDS, Massachusetts Institute of Technology
 
     This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@ license_text='''
    :synopsis: Module implements a simple example of translating a syntactically
               co-safe GDTL formula to a deterministic finite state automaton.
 
-.. moduleauthor:: Cristian Ioan Vasile <cvasile@bu.edu>
+.. moduleauthor:: Cristian Ioan Vasile <cvasile@mit.edu>
 
 '''
 '''
@@ -31,7 +31,6 @@ Created on Dec 4, 2017
 @author: cristi
 '''
 
-import sys
 import logging
 from collections import deque
 
